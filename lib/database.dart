@@ -1,0 +1,33 @@
+import 'package:drift/drift.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
+import 'package:url_manager/models/url_model.dart';
+import 'dart:io';
+
+part 'database.g.dart'; // Driftによる自動生成ファイル
+
+@DriftDatabase(tables: [Urls])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase(QueryExecutor e) : super(e);
+
+  @override
+  int get schemaVersion => 1; // スキーマのバージョン
+
+  // 取得
+  Future<List<Url>> getAllUrls() => select(urls).get();
+  // 挿入
+  Future<int> insertUrl(Url url) => into(urls).insert(url);
+  // 更新
+  Future<void> updateUrl(Url url) => update(urls).replace(url);
+  // 削除
+  Future<void> deleteUrl(Url url) => delete(urls).delete(url);
+}
+
+// データベース接続を開くための関数
+final provideDatabase = FutureProvider<AppDatabase>((ref) async {
+  final dbFolder = await getApplicationDocumentsDirectory();
+  final file = File(p.join(dbFolder.path, 'db.sqlite'));
+  return AppDatabase(NativeDatabase(file));
+});
