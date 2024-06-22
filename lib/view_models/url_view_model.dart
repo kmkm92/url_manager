@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -67,8 +68,17 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     // await sortUrl();
   }
 
-  Future<void> opemUrl(String stringUrl) async {
+  Future<void> opemUrl(BuildContext context, stringUrl) async {
     final url = Uri.parse(stringUrl);
+    final _canLaunch = await canLaunchUrl(url);
+
+    if (!_canLaunch) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('urlが開けません'),
+        ),
+      );
+    }
     launchUrl(url);
     await loadUrls();
   }
@@ -78,6 +88,19 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     final db = await _ref.read(provideDatabase.future);
     final deleteId = await db.deleteUrl(url);
 
+    await loadUrls();
+  }
+
+  Future<void> addOrUpdateUrl(Url url) async {
+    final db = await _ref.read(provideDatabase.future);
+    if (url.id == null) {
+      // 新しいタスクを追加
+      final insertId = await db.insertUrl(url);
+    } else {
+      // 既存のタスクを更新
+      await db.updateUrl(url);
+    }
+    // loadUrls();
     await loadUrls();
   }
 }
