@@ -3,7 +3,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_manager/view_models/url_summary_view_model.dart';
-import 'package:url_manager/views/ai_settings_view.dart';
 
 class UrlSummary extends ConsumerWidget {
   const UrlSummary({
@@ -32,16 +31,6 @@ class UrlSummary extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.replay_outlined),
               ),
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AiSettingsView(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined),
-              )
             ],
           ),
           body: Scrollbar(
