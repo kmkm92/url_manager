@@ -460,37 +460,50 @@ class _MetricCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               CircleAvatar(
-                radius: 18,
+                radius: 16,
                 backgroundColor:
                     metric.accentColor ?? theme.colorScheme.primary,
                 child: Icon(
                   metric.icon,
+                  size: 18,
                   color: theme.colorScheme.onPrimary,
                 ),
               ),
               const Spacer(),
-              Text(
-                metric.trendLabel,
-                style: theme.textTheme.bodySmall,
+              Flexible(
+                child: Text(
+                  metric.trendLabel,
+                  textAlign: TextAlign.end,
+                  style: theme.textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            metric.value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 8),
+          FittedBox(
+            alignment: Alignment.centerLeft,
+            fit: BoxFit.scaleDown,
+            child: Text(
+              metric.value,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             metric.title,
             style: theme.textTheme.bodyMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
