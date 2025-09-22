@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_manager/database.dart';
@@ -154,7 +155,8 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       return;
     }
     _recentlyDeleted = null;
-    await addOrUpdateUrl(toRestore.copyWith(id: null, savedAt: DateTime.now()));
+    await addOrUpdateUrl(
+        toRestore.copyWith(id: const Value(null), savedAt: DateTime.now()));
   }
 
   Url _decorateUrl(Url url) {

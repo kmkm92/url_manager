@@ -32,8 +32,8 @@ class HistoryView extends ConsumerWidget {
         itemCount: entries.length,
         itemBuilder: (context, index) {
           final entry = entries[index];
-          final formattedDate = DateFormat('yyyy/MM/dd (E)', 'ja_JP')
-              .format(entry.key.toLocal());
+          final formattedDate =
+              DateFormat('yyyy/MM/dd (E)', 'ja_JP').format(entry.key.toLocal());
           final total = entry.value.length;
 
           return Padding(
@@ -59,7 +59,9 @@ class HistoryView extends ConsumerWidget {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(
-                        url.isRead ? Icons.check_circle : Icons.radio_button_unchecked,
+                        url.isRead
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
                         color: url.isRead
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.outline,
@@ -126,7 +128,8 @@ class _HistoryEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.hourglass_empty, size: 72, color: theme.colorScheme.primary),
+            Icon(Icons.hourglass_empty,
+                size: 72, color: theme.colorScheme.primary),
             const SizedBox(height: 12),
             Text(
               'まだ履歴はありません',
