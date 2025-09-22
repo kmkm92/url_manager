@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_manager/view_models/ai_settings_view_model.dart';
 
 @immutable
@@ -219,11 +220,79 @@ Future<String> _requestGeminiSummary(
   throw SummaryGenerationException('要約結果が取得できませんでした。');
 }
 
+const _summaryCacheStorageKey = 'url_summary_cache_entries';
+
 class SummaryCacheNotifier
     extends StateNotifier<Map<SummaryRequest, AsyncValue<String>>> {
-  SummaryCacheNotifier(this._ref) : super(const {});
+  SummaryCacheNotifier(this._ref) : super(const {}) {
+    _restoreCache();
+  }
 
   final Ref _ref;
+
+  Future<void> _restoreCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final serialized = prefs.getString(_summaryCacheStorageKey);
+    if (serialized == null || serialized.isEmpty) {
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(serialized);
+      if (decoded is! List) {
+        return;
+      }
+
+      final restoredEntries = <SummaryRequest, AsyncValue<String>>{};
+      for (final entry in decoded) {
+        if (entry is! Map<String, dynamic>) {
+          continue;
+        }
+        final url = entry['url'];
+        final title = entry['title'];
+        final summary = entry['summary'];
+        if (url is String &&
+            url.isNotEmpty &&
+            title is String &&
+            title.isNotEmpty &&
+            summary is String &&
+            summary.isNotEmpty) {
+          restoredEntries[
+            SummaryRequest(url: url, title: title),
+          ] = AsyncValue<String>.data(summary);
+        }
+      }
+
+      if (restoredEntries.isNotEmpty) {
+        state = {
+          ...state,
+          ...restoredEntries,
+        };
+      }
+    } catch (_) {
+      // Ignore any cache restoration failures and continue with an empty cache.
+    }
+  }
+
+  Future<void> _persistCurrentSummaries() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final entries = state.entries
+          .where((entry) => entry.value is AsyncData<String>)
+          .map((entry) {
+        final summaryValue = (entry.value as AsyncData<String>).value;
+        return <String, dynamic>{
+          'url': entry.key.url,
+          'title': entry.key.title,
+          'summary': summaryValue,
+        };
+      }).toList(growable: false);
+
+      await prefs.setString(_summaryCacheStorageKey, jsonEncode(entries));
+    } catch (_) {
+      // Ignore persistence errors; the in-memory cache will still be available.
+    }
+  }
 
   Future<void> loadSummary(
     SummaryRequest request, {
@@ -233,6 +302,8 @@ class SummaryCacheNotifier
     if (!forceRefresh && existing is AsyncData<String>) {
       return;
     }
+
+    final previousData = existing;
 
     state = {
       ...state,
@@ -251,7 +322,15 @@ class SummaryCacheNotifier
         ...state,
         request: AsyncValue<String>.data(summary),
       };
+      await _persistCurrentSummaries();
     } catch (error, stackTrace) {
+      if (previousData is AsyncData<String>) {
+        state = {
+          ...state,
+          request: previousData,
+        };
+        return;
+      }
       state = {
         ...state,
         request: AsyncValue<String>.error(error, stackTrace),
