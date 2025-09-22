@@ -1,11 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_manager/view_models/url_summary_view_model.dart';
-import 'package:url_manager/views/ai_settings_view.dart';
 
-class UrlSummary extends ConsumerWidget {
+class UrlSummary extends ConsumerStatefulWidget {
   const UrlSummary({
     super.key,
     required this.summaryRequest,
@@ -14,8 +15,45 @@ class UrlSummary extends ConsumerWidget {
   final SummaryRequest summaryRequest;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final summaryAsync = ref.watch(urlSummaryProvider(summaryRequest));
+  ConsumerState<UrlSummary> createState() => _UrlSummaryState();
+}
+
+class _UrlSummaryState extends ConsumerState<UrlSummary> {
+  @override
+  void initState() {
+    super.initState();
+    _ensureSummaryLoaded();
+  }
+
+  @override
+  void didUpdateWidget(covariant UrlSummary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.summaryRequest != widget.summaryRequest) {
+      _ensureSummaryLoaded(forceRefresh: false);
+    }
+  }
+
+  void _ensureSummaryLoaded({bool forceRefresh = false}) {
+    final cache = ref.read(summaryCacheProvider);
+    final existing = cache[widget.summaryRequest];
+    if (existing == null || forceRefresh) {
+      Future.microtask(() {
+        ref
+            .read(summaryCacheProvider.notifier)
+            .loadSummary(widget.summaryRequest, forceRefresh: forceRefresh);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final summaryAsync = ref.watch(
+      summaryCacheProvider.select(
+        (cache) => cache[widget.summaryRequest],
+      ),
+    );
+
+    final value = summaryAsync ?? const AsyncValue<String>.loading();
 
     return ScreenUtilInit(
       designSize: const Size(926, 428),
@@ -28,26 +66,16 @@ class UrlSummary extends ConsumerWidget {
             actions: [
               IconButton(
                 onPressed: () {
-                  ref.refresh(urlSummaryProvider(summaryRequest));
+                  _ensureSummaryLoaded(forceRefresh: true);
                 },
                 icon: const Icon(Icons.replay_outlined),
               ),
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AiSettingsView(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined),
-              )
             ],
           ),
           body: Scrollbar(
             child: Padding(
               padding: EdgeInsets.all(16.w),
-              child: summaryAsync.when(
+              child: value.when(
                 data: (summary) {
                   final markdown = summary.trim().isEmpty
                       ? '要約結果が空でした。設定やAPIレスポンスを確認してください。'
