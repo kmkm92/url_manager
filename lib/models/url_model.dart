@@ -13,17 +13,17 @@ class Urls extends Table {
 }
 
 @freezed
-class Url with _$Url {
-  const factory Url({
+abstract class UrlItem with _$UrlItem {
+  const factory UrlItem({
     required int? id,
     required String message,
     required String url,
     required String details,
     required DateTime savedAt,
-  }) = _Url;
+  }) = _UrlItem;
 
-  factory Url.fromRow(Map<String, dynamic> row) {
-    return Url(
+  factory UrlItem.fromRow(Map<String, dynamic> row) {
+    return UrlItem(
       id: row['id'] as int,
       message: row['message'] as String,
       url: row['url'] as String,

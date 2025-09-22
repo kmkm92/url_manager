@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,91 +9,64 @@ part of 'url_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
 
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
 /// @nodoc
-mixin _$Url {
-  int? get id => throw _privateConstructorUsedError;
-  String get message => throw _privateConstructorUsedError;
-  String get url => throw _privateConstructorUsedError;
-  String get details => throw _privateConstructorUsedError;
-  DateTime get savedAt => throw _privateConstructorUsedError;
+mixin _$UrlItem {
+  int? get id;
+  String get message;
+  String get url;
+  String get details;
+  DateTime get savedAt;
 
-  @JsonKey(ignore: true)
-  $UrlCopyWith<Url> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $UrlCopyWith<$Res> {
-  factory $UrlCopyWith(Url value, $Res Function(Url) then) =
-      _$UrlCopyWithImpl<$Res, Url>;
-  @useResult
-  $Res call(
-      {int? id, String message, String url, String details, DateTime savedAt});
-}
-
-/// @nodoc
-class _$UrlCopyWithImpl<$Res, $Val extends Url> implements $UrlCopyWith<$Res> {
-  _$UrlCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of UrlItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $UrlItemCopyWith<UrlItem> get copyWith =>
+      _$UrlItemCopyWithImpl<UrlItem>(this as UrlItem, _$identity);
+
   @override
-  $Res call({
-    Object? id = freezed,
-    Object? message = null,
-    Object? url = null,
-    Object? details = null,
-    Object? savedAt = null,
-  }) {
-    return _then(_value.copyWith(
-      id: freezed == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int?,
-      message: null == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String,
-      url: null == url
-          ? _value.url
-          : url // ignore: cast_nullable_to_non_nullable
-              as String,
-      details: null == details
-          ? _value.details
-          : details // ignore: cast_nullable_to_non_nullable
-              as String,
-      savedAt: null == savedAt
-          ? _value.savedAt
-          : savedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-    ) as $Val);
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is UrlItem &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.url, url) || other.url == url) &&
+            (identical(other.details, details) || other.details == details) &&
+            (identical(other.savedAt, savedAt) || other.savedAt == savedAt));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, message, url, details, savedAt);
+
+  @override
+  String toString() {
+    return 'UrlItem(id: $id, message: $message, url: $url, details: $details, savedAt: $savedAt)';
   }
 }
 
 /// @nodoc
-abstract class _$$UrlImplCopyWith<$Res> implements $UrlCopyWith<$Res> {
-  factory _$$UrlImplCopyWith(_$UrlImpl value, $Res Function(_$UrlImpl) then) =
-      __$$UrlImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $UrlItemCopyWith<$Res> {
+  factory $UrlItemCopyWith(UrlItem value, $Res Function(UrlItem) _then) =
+      _$UrlItemCopyWithImpl;
   @useResult
   $Res call(
       {int? id, String message, String url, String details, DateTime savedAt});
 }
 
 /// @nodoc
-class __$$UrlImplCopyWithImpl<$Res> extends _$UrlCopyWithImpl<$Res, _$UrlImpl>
-    implements _$$UrlImplCopyWith<$Res> {
-  __$$UrlImplCopyWithImpl(_$UrlImpl _value, $Res Function(_$UrlImpl) _then)
-      : super(_value, _then);
+class _$UrlItemCopyWithImpl<$Res> implements $UrlItemCopyWith<$Res> {
+  _$UrlItemCopyWithImpl(this._self, this._then);
 
+  final UrlItem _self;
+  final $Res Function(UrlItem) _then;
+
+  /// Create a copy of UrlItem
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -103,35 +76,201 @@ class __$$UrlImplCopyWithImpl<$Res> extends _$UrlCopyWithImpl<$Res, _$UrlImpl>
     Object? details = null,
     Object? savedAt = null,
   }) {
-    return _then(_$UrlImpl(
+    return _then(_self.copyWith(
       id: freezed == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int?,
       message: null == message
-          ? _value.message
+          ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String,
       url: null == url
-          ? _value.url
+          ? _self.url
           : url // ignore: cast_nullable_to_non_nullable
               as String,
       details: null == details
-          ? _value.details
+          ? _self.details
           : details // ignore: cast_nullable_to_non_nullable
               as String,
       savedAt: null == savedAt
-          ? _value.savedAt
+          ? _self.savedAt
           : savedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [UrlItem].
+extension UrlItemPatterns on UrlItem {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_UrlItem value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_UrlItem value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_UrlItem value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(int? id, String message, String url, String details,
+            DateTime savedAt)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem() when $default != null:
+        return $default(
+            _that.id, _that.message, _that.url, _that.details, _that.savedAt);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(int? id, String message, String url, String details,
+            DateTime savedAt)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem():
+        return $default(
+            _that.id, _that.message, _that.url, _that.details, _that.savedAt);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(int? id, String message, String url, String details,
+            DateTime savedAt)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _UrlItem() when $default != null:
+        return $default(
+            _that.id, _that.message, _that.url, _that.details, _that.savedAt);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$UrlImpl implements _Url {
-  const _$UrlImpl(
+class _UrlItem implements UrlItem {
+  const _UrlItem(
       {required this.id,
       required this.message,
       required this.url,
@@ -149,16 +288,19 @@ class _$UrlImpl implements _Url {
   @override
   final DateTime savedAt;
 
+  /// Create a copy of UrlItem
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'Url(id: $id, message: $message, url: $url, details: $details, savedAt: $savedAt)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$UrlItemCopyWith<_UrlItem> get copyWith =>
+      __$UrlItemCopyWithImpl<_UrlItem>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$UrlImpl &&
+            other is _UrlItem &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.message, message) || other.message == message) &&
             (identical(other.url, url) || other.url == url) &&
@@ -170,33 +312,63 @@ class _$UrlImpl implements _Url {
   int get hashCode =>
       Object.hash(runtimeType, id, message, url, details, savedAt);
 
-  @JsonKey(ignore: true)
+  @override
+  String toString() {
+    return 'UrlItem(id: $id, message: $message, url: $url, details: $details, savedAt: $savedAt)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$UrlItemCopyWith<$Res> implements $UrlItemCopyWith<$Res> {
+  factory _$UrlItemCopyWith(_UrlItem value, $Res Function(_UrlItem) _then) =
+      __$UrlItemCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {int? id, String message, String url, String details, DateTime savedAt});
+}
+
+/// @nodoc
+class __$UrlItemCopyWithImpl<$Res> implements _$UrlItemCopyWith<$Res> {
+  __$UrlItemCopyWithImpl(this._self, this._then);
+
+  final _UrlItem _self;
+  final $Res Function(_UrlItem) _then;
+
+  /// Create a copy of UrlItem
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  _$$UrlImplCopyWith<_$UrlImpl> get copyWith =>
-      __$$UrlImplCopyWithImpl<_$UrlImpl>(this, _$identity);
+  $Res call({
+    Object? id = freezed,
+    Object? message = null,
+    Object? url = null,
+    Object? details = null,
+    Object? savedAt = null,
+  }) {
+    return _then(_UrlItem(
+      id: freezed == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int?,
+      message: null == message
+          ? _self.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+      url: null == url
+          ? _self.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as String,
+      details: null == details
+          ? _self.details
+          : details // ignore: cast_nullable_to_non_nullable
+              as String,
+      savedAt: null == savedAt
+          ? _self.savedAt
+          : savedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
+  }
 }
 
-abstract class _Url implements Url {
-  const factory _Url(
-      {required final int? id,
-      required final String message,
-      required final String url,
-      required final String details,
-      required final DateTime savedAt}) = _$UrlImpl;
-
-  @override
-  int? get id;
-  @override
-  String get message;
-  @override
-  String get url;
-  @override
-  String get details;
-  @override
-  DateTime get savedAt;
-  @override
-  @JsonKey(ignore: true)
-  _$$UrlImplCopyWith<_$UrlImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

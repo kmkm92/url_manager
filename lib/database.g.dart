@@ -178,6 +178,16 @@ class Url extends DataClass implements Insertable<Url> {
         details: details ?? this.details,
         savedAt: savedAt ?? this.savedAt,
       );
+  Url copyWithCompanion(UrlsCompanion data) {
+    return Url(
+      id: data.id.present ? data.id.value : this.id,
+      message: data.message.present ? data.message.value : this.message,
+      url: data.url.present ? data.url.value : this.url,
+      details: data.details.present ? data.details.value : this.details,
+      savedAt: data.savedAt.present ? data.savedAt.value : this.savedAt,
+    );
+  }
+
   @override
   String toString() {
     return (StringBuffer('Url(')
@@ -293,7 +303,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
 
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
-  _$AppDatabaseManager get managers => _$AppDatabaseManager(this);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $UrlsTable urls = $UrlsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -302,7 +312,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [urls];
 }
 
-typedef $$UrlsTableInsertCompanionBuilder = UrlsCompanion Function({
+typedef $$UrlsTableCreateCompanionBuilder = UrlsCompanion Function({
   Value<int?> id,
   required String message,
   required String url,
@@ -317,25 +327,102 @@ typedef $$UrlsTableUpdateCompanionBuilder = UrlsCompanion Function({
   Value<DateTime> savedAt,
 });
 
+class $$UrlsTableFilterComposer extends Composer<_$AppDatabase, $UrlsTable> {
+  $$UrlsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get message => $composableBuilder(
+      column: $table.message, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get savedAt => $composableBuilder(
+      column: $table.savedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$UrlsTableOrderingComposer extends Composer<_$AppDatabase, $UrlsTable> {
+  $$UrlsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get message => $composableBuilder(
+      column: $table.message, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get savedAt => $composableBuilder(
+      column: $table.savedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$UrlsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UrlsTable> {
+  $$UrlsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get savedAt =>
+      $composableBuilder(column: $table.savedAt, builder: (column) => column);
+}
+
 class $$UrlsTableTableManager extends RootTableManager<
     _$AppDatabase,
     $UrlsTable,
     Url,
     $$UrlsTableFilterComposer,
     $$UrlsTableOrderingComposer,
-    $$UrlsTableProcessedTableManager,
-    $$UrlsTableInsertCompanionBuilder,
-    $$UrlsTableUpdateCompanionBuilder> {
+    $$UrlsTableAnnotationComposer,
+    $$UrlsTableCreateCompanionBuilder,
+    $$UrlsTableUpdateCompanionBuilder,
+    (Url, BaseReferences<_$AppDatabase, $UrlsTable, Url>),
+    Url,
+    PrefetchHooks Function()> {
   $$UrlsTableTableManager(_$AppDatabase db, $UrlsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$UrlsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$UrlsTableOrderingComposer(ComposerState(db, table)),
-          getChildManagerBuilder: (p) => $$UrlsTableProcessedTableManager(p),
-          getUpdateCompanionBuilder: ({
+          createFilteringComposer: () =>
+              $$UrlsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UrlsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UrlsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
             Value<int?> id = const Value.absent(),
             Value<String> message = const Value.absent(),
             Value<String> url = const Value.absent(),
@@ -349,7 +436,7 @@ class $$UrlsTableTableManager extends RootTableManager<
             details: details,
             savedAt: savedAt,
           ),
-          getInsertCompanionBuilder: ({
+          createCompanionCallback: ({
             Value<int?> id = const Value.absent(),
             required String message,
             required String url,
@@ -363,81 +450,28 @@ class $$UrlsTableTableManager extends RootTableManager<
             details: details,
             savedAt: savedAt,
           ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
         ));
 }
 
-class $$UrlsTableProcessedTableManager extends ProcessedTableManager<
+typedef $$UrlsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
     $UrlsTable,
     Url,
     $$UrlsTableFilterComposer,
     $$UrlsTableOrderingComposer,
-    $$UrlsTableProcessedTableManager,
-    $$UrlsTableInsertCompanionBuilder,
-    $$UrlsTableUpdateCompanionBuilder> {
-  $$UrlsTableProcessedTableManager(super.$state);
-}
+    $$UrlsTableAnnotationComposer,
+    $$UrlsTableCreateCompanionBuilder,
+    $$UrlsTableUpdateCompanionBuilder,
+    (Url, BaseReferences<_$AppDatabase, $UrlsTable, Url>),
+    Url,
+    PrefetchHooks Function()>;
 
-class $$UrlsTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $UrlsTable> {
-  $$UrlsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get message => $state.composableBuilder(
-      column: $state.table.message,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get url => $state.composableBuilder(
-      column: $state.table.url,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get details => $state.composableBuilder(
-      column: $state.table.details,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get savedAt => $state.composableBuilder(
-      column: $state.table.savedAt,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-}
-
-class $$UrlsTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $UrlsTable> {
-  $$UrlsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get message => $state.composableBuilder(
-      column: $state.table.message,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get url => $state.composableBuilder(
-      column: $state.table.url,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get details => $state.composableBuilder(
-      column: $state.table.details,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get savedAt => $state.composableBuilder(
-      column: $state.table.savedAt,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
-
-class _$AppDatabaseManager {
+class $AppDatabaseManager {
   final _$AppDatabase _db;
-  _$AppDatabaseManager(this._db);
+  $AppDatabaseManager(this._db);
   $$UrlsTableTableManager get urls => $$UrlsTableTableManager(_db, _db.urls);
 }

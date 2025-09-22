@@ -3,7 +3,7 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - receive_sharing_intent (1.8.0):
+  - receive_sharing_intent (1.8.1):
     - Flutter
   - url_launcher_ios (0.0.1):
     - Flutter
@@ -25,11 +25,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  receive_sharing_intent: df9c334dc9feadcbd3266e5cb49c8443405e1c9f
+  receive_sharing_intent: 79c848f5b045674ad60b9fea3bafea59962ad2c1
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
 
-PODFILE CHECKSUM: 946abc67c5b83a44f90746e63236e159fe53c304
+PODFILE CHECKSUM: 664e6e1a68f80a52ff84884e23db7f77d6b263e0
 
-COCOAPODS: 1.14.2
+COCOAPODS: 1.16.2
