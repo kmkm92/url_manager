@@ -36,8 +36,7 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant(''));
-  static const VerificationMeta _domainMeta =
-      const VerificationMeta('domain');
+  static const VerificationMeta _domainMeta = const VerificationMeta('domain');
   @override
   late final GeneratedColumn<String> domain = GeneratedColumn<String>(
       'domain', aliasedName, false,
@@ -58,14 +57,17 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
       'is_starred', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_starred" IN (0, 1))'),
       defaultValue: const Constant(false));
-  static const VerificationMeta _isReadMeta =
-      const VerificationMeta('isRead');
+  static const VerificationMeta _isReadMeta = const VerificationMeta('isRead');
   @override
   late final GeneratedColumn<bool> isRead = GeneratedColumn<bool>(
       'is_read', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_read" IN (0, 1))'),
       defaultValue: const Constant(false));
   static const VerificationMeta _isArchivedMeta =
       const VerificationMeta('isArchived');
@@ -74,14 +76,15 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
       'is_archived', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
       defaultValue: const Constant(false));
   static const VerificationMeta _ogImageUrlMeta =
       const VerificationMeta('ogImageUrl');
   @override
   late final GeneratedColumn<String> ogImageUrl = GeneratedColumn<String>(
       'og_image_url', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false);
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _savedAtMeta =
       const VerificationMeta('savedAt');
   @override
@@ -244,7 +247,7 @@ class Url extends DataClass implements Insertable<Url> {
     map['is_read'] = Variable<bool>(isRead);
     map['is_archived'] = Variable<bool>(isArchived);
     if (!nullToAbsent || ogImageUrl != null) {
-      map['og_image_url'] = Variable<String?>(ogImageUrl);
+      map['og_image_url'] = Variable<String>(ogImageUrl);
     }
     map['saved_at'] = Variable<DateTime>(savedAt);
     return map;
@@ -336,8 +339,7 @@ class Url extends DataClass implements Insertable<Url> {
       details: data.details.present ? data.details.value : this.details,
       domain: data.domain.present ? data.domain.value : this.domain,
       tags: data.tags.present ? data.tags.value : this.tags,
-      isStarred:
-          data.isStarred.present ? data.isStarred.value : this.isStarred,
+      isStarred: data.isStarred.present ? data.isStarred.value : this.isStarred,
       isRead: data.isRead.present ? data.isRead.value : this.isRead,
       isArchived:
           data.isArchived.present ? data.isArchived.value : this.isArchived,
@@ -414,25 +416,16 @@ class UrlsCompanion extends UpdateCompanion<Url> {
     this.id = const Value.absent(),
     required String message,
     required String url,
-    String details = '',
-    String domain = '',
-    String tags = '',
-    bool isStarred = false,
-    bool isRead = false,
-    bool isArchived = false,
-    String? ogImageUrl,
+    this.details = const Value.absent(),
+    this.domain = const Value.absent(),
+    this.tags = const Value.absent(),
+    this.isStarred = const Value.absent(),
+    this.isRead = const Value.absent(),
+    this.isArchived = const Value.absent(),
+    this.ogImageUrl = const Value.absent(),
     required DateTime savedAt,
   })  : message = Value(message),
         url = Value(url),
-        details = Value(details),
-        domain = Value(domain),
-        tags = Value(tags),
-        isStarred = Value(isStarred),
-        isRead = Value(isRead),
-        isArchived = Value(isArchived),
-        ogImageUrl = ogImageUrl == null
-            ? const Value.absent()
-            : Value(ogImageUrl),
         savedAt = Value(savedAt);
   static Insertable<Url> custom({
     Expression<int>? id,
@@ -520,7 +513,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
     if (ogImageUrl.present) {
-      map['og_image_url'] = Variable<String?>(ogImageUrl.value);
+      map['og_image_url'] = Variable<String>(ogImageUrl.value);
     }
     if (savedAt.present) {
       map['saved_at'] = Variable<DateTime>(savedAt.value);
@@ -562,12 +555,12 @@ typedef $$UrlsTableCreateCompanionBuilder = UrlsCompanion Function({
   Value<int?> id,
   required String message,
   required String url,
-  String details,
-  String domain,
-  String tags,
-  bool isStarred,
-  bool isRead,
-  bool isArchived,
+  Value<String> details,
+  Value<String> domain,
+  Value<String> tags,
+  Value<bool> isStarred,
+  Value<bool> isRead,
+  Value<bool> isArchived,
   Value<String?> ogImageUrl,
   required DateTime savedAt,
 });
@@ -739,6 +732,12 @@ class $$UrlsTableTableManager extends RootTableManager<
             Value<String> message = const Value.absent(),
             Value<String> url = const Value.absent(),
             Value<String> details = const Value.absent(),
+            Value<String> domain = const Value.absent(),
+            Value<String> tags = const Value.absent(),
+            Value<bool> isStarred = const Value.absent(),
+            Value<bool> isRead = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
+            Value<String?> ogImageUrl = const Value.absent(),
             Value<DateTime> savedAt = const Value.absent(),
           }) =>
               UrlsCompanion(
@@ -746,13 +745,25 @@ class $$UrlsTableTableManager extends RootTableManager<
             message: message,
             url: url,
             details: details,
+            domain: domain,
+            tags: tags,
+            isStarred: isStarred,
+            isRead: isRead,
+            isArchived: isArchived,
+            ogImageUrl: ogImageUrl,
             savedAt: savedAt,
           ),
           createCompanionCallback: ({
             Value<int?> id = const Value.absent(),
             required String message,
             required String url,
-            required String details,
+            Value<String> details = const Value.absent(),
+            Value<String> domain = const Value.absent(),
+            Value<String> tags = const Value.absent(),
+            Value<bool> isStarred = const Value.absent(),
+            Value<bool> isRead = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
+            Value<String?> ogImageUrl = const Value.absent(),
             required DateTime savedAt,
           }) =>
               UrlsCompanion.insert(
@@ -760,6 +771,12 @@ class $$UrlsTableTableManager extends RootTableManager<
             message: message,
             url: url,
             details: details,
+            domain: domain,
+            tags: tags,
+            isStarred: isStarred,
+            isRead: isRead,
+            isArchived: isArchived,
+            ogImageUrl: ogImageUrl,
             savedAt: savedAt,
           ),
           withReferenceMapper: (p0) => p0
