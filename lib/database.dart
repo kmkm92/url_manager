@@ -13,7 +13,21 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 1; // スキーマのバージョン
+  int get schemaVersion => 2; // スキーマのバージョン
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(urls, urls.domain);
+            await m.addColumn(urls, urls.tags);
+            await m.addColumn(urls, urls.isStarred);
+            await m.addColumn(urls, urls.isRead);
+            await m.addColumn(urls, urls.isArchived);
+            await m.addColumn(urls, urls.ogImageUrl);
+          }
+        },
+      );
 
   // 取得
   Future<List<Url>> getAllUrls() => select(urls).get();

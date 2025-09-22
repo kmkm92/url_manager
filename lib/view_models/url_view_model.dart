@@ -15,6 +15,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   final Ref _ref;
   StreamSubscription? _intentSub;
   final List<SharedMediaFile> _sharedFiles = [];
+  Url? _recentlyDeleted;
 
   UrlListNotifier(this._ref) : super([]) {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
@@ -49,9 +50,8 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
 
   Future<void> addUrl(Url url) async {
     final db = await _ref.read(provideDatabase.future);
-
-    final insertId = await db.insertUrl(url);
-
+    final prepared = _decorateUrl(url);
+    await db.insertUrl(prepared);
     await loadUrls();
   }
 
@@ -60,6 +60,12 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       message: message,
       url: url,
       details: '',
+      domain: _deriveDomain(url),
+      tags: '',
+      isStarred: false,
+      isRead: false,
+      isArchived: false,
+      ogImageUrl: null,
       savedAt: DateTime.now(),
     );
     await addUrl(newUrl);
@@ -86,21 +92,91 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
 // 論理削除
   Future<void> deleteUrl(Url url) async {
     final db = await _ref.read(provideDatabase.future);
-    final deleteId = await db.deleteUrl(url);
-
+    _recentlyDeleted = url;
+    await db.deleteUrl(url);
     await loadUrls();
   }
 
   Future<void> addOrUpdateUrl(Url url) async {
     final db = await _ref.read(provideDatabase.future);
-    if (url.id == null) {
-      // 新しいタスクを追加
-      final insertId = await db.insertUrl(url);
+    final prepared = _decorateUrl(url);
+    if (prepared.id == null) {
+      await db.insertUrl(prepared);
     } else {
-      // 既存のタスクを更新
-      await db.updateUrl(url);
+      await db.updateUrl(prepared);
     }
-    // loadUrls();
     await loadUrls();
+  }
+
+  Future<void> toggleStar(Url url) async {
+    final db = await _ref.read(provideDatabase.future);
+    await db.updateUrl(url.copyWith(isStarred: !url.isStarred));
+    await loadUrls();
+  }
+
+  Future<void> toggleRead(Url url) async {
+    final db = await _ref.read(provideDatabase.future);
+    await db.updateUrl(url.copyWith(isRead: !url.isRead));
+    await loadUrls();
+  }
+
+  Future<void> toggleArchive(Url url) async {
+    final db = await _ref.read(provideDatabase.future);
+    await db.updateUrl(url.copyWith(isArchived: !url.isArchived));
+    await loadUrls();
+  }
+
+  Future<void> updateMetadata(
+    Url url, {
+    String? details,
+    String? tags,
+    bool? isStarred,
+    bool? isRead,
+    bool? isArchived,
+  }) async {
+    final db = await _ref.read(provideDatabase.future);
+    await db.updateUrl(
+      url.copyWith(
+        details: details ?? url.details,
+        tags: tags ?? url.tags,
+        isStarred: isStarred ?? url.isStarred,
+        isRead: isRead ?? url.isRead,
+        isArchived: isArchived ?? url.isArchived,
+        domain: _deriveDomain(url.url),
+      ),
+    );
+    await loadUrls();
+  }
+
+  Future<void> restoreDeleted() async {
+    final toRestore = _recentlyDeleted;
+    if (toRestore == null) {
+      return;
+    }
+    _recentlyDeleted = null;
+    await addOrUpdateUrl(toRestore.copyWith(id: null, savedAt: DateTime.now()));
+  }
+
+  Url _decorateUrl(Url url) {
+    final normalizedTags = url.tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toSet()
+        .join(', ');
+    return url.copyWith(
+      domain: _deriveDomain(url.url),
+      tags: normalizedTags,
+      details: url.details,
+    );
+  }
+
+  String _deriveDomain(String sourceUrl) {
+    try {
+      final uri = Uri.parse(sourceUrl);
+      return uri.host;
+    } catch (_) {
+      return '';
+    }
   }
 }
