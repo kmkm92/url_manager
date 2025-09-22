@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
+import 'package:url_manager/view_models/url_summary_view_model.dart';
 import 'package:url_manager/views/url_add_view.dart';
 import 'package:url_manager/views/url_summary_view.dart';
 
@@ -102,7 +103,13 @@ class UrlListView extends ConsumerWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => UrlSummary()),
+                                  builder: (context) => UrlSummary(
+                                    summaryRequest: SummaryRequest(
+                                      url: url.url,
+                                      title: url.message,
+                                    ),
+                                  ),
+                                ),
                               );
                             },
                           ),
