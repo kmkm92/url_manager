@@ -39,6 +39,7 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(aiSettingsProvider);
+    _syncControllers(settings);
 
     return ScreenUtilInit(
       designSize: const Size(926, 428),
@@ -69,13 +70,15 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
                 children: [
                   _buildDescription(context),
                   SizedBox(height: 24.h),
+                  _buildProviderField(context, settings),
+                  SizedBox(height: 16.h),
                   _buildApiKeyField(context),
                   SizedBox(height: 16.h),
-                  _buildBaseUrlField(context),
+                  _buildBaseUrlField(context, settings),
                   SizedBox(height: 16.h),
-                  _buildEndpointField(context),
+                  _buildEndpointField(context, settings),
                   SizedBox(height: 16.h),
-                  _buildModelField(context),
+                  _buildModelField(context, settings),
                   SizedBox(height: 24.h),
                   _buildStatusIndicator(settings),
                 ],
@@ -89,8 +92,30 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
 
   Widget _buildDescription(BuildContext context) {
     return Text(
-      '各自で取得したAPIキーとエンドポイントを設定すると、保存したURLをAIで要約できます。OpenAI互換のAPIであればそのまま利用できます。',
+      '各自で取得したAPIキーとエンドポイントを設定すると、保存したURLをAIで要約できます。OpenAI互換のAPIまたはGemini APIを利用できます。',
       style: Theme.of(context).textTheme.bodyMedium,
+    );
+  }
+
+  Widget _buildProviderField(BuildContext context, AiSettings settings) {
+    return DropdownButtonFormField<AiProvider>(
+      value: settings.provider,
+      decoration: const InputDecoration(
+        labelText: 'AIプロバイダー',
+      ),
+      onChanged: (value) {
+        if (value != null) {
+          ref.read(aiSettingsProvider.notifier).updateProvider(value);
+        }
+      },
+      items: AiProvider.values
+          .map(
+            (provider) => DropdownMenuItem<AiProvider>(
+              value: provider,
+              child: Text(_providerLabel(provider)),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -115,12 +140,12 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
     );
   }
 
-  Widget _buildBaseUrlField(BuildContext context) {
+  Widget _buildBaseUrlField(BuildContext context, AiSettings settings) {
     return TextField(
       controller: _baseUrlController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'ベースURL',
-        hintText: 'https://api.openai.com/v1',
+        hintText: _baseUrlHint(settings.provider),
       ),
       keyboardType: TextInputType.url,
       onChanged: (value) {
@@ -129,12 +154,12 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
     );
   }
 
-  Widget _buildEndpointField(BuildContext context) {
+  Widget _buildEndpointField(BuildContext context, AiSettings settings) {
     return TextField(
       controller: _endpointController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'エンドポイントパス',
-        hintText: '/chat/completions',
+        hintText: _endpointHint(settings.provider),
       ),
       onChanged: (value) {
         ref.read(aiSettingsProvider.notifier).updateEndpointPath(value);
@@ -142,12 +167,12 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
     );
   }
 
-  Widget _buildModelField(BuildContext context) {
+  Widget _buildModelField(BuildContext context, AiSettings settings) {
     return TextField(
       controller: _modelController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'モデル名',
-        hintText: 'gpt-4o-mini など',
+        hintText: _modelHint(settings.provider),
       ),
       onChanged: (value) {
         ref.read(aiSettingsProvider.notifier).updateModel(value);
@@ -188,5 +213,60 @@ class _AiSettingsViewState extends ConsumerState<AiSettingsView> {
     await ref
         .read(aiSettingsProvider.notifier)
         .updateModel(_modelController.text);
+  }
+
+  void _syncControllers(AiSettings settings) {
+    _updateControllerIfNeeded(_apiKeyController, settings.apiKey);
+    _updateControllerIfNeeded(_baseUrlController, settings.baseUrl);
+    _updateControllerIfNeeded(_endpointController, settings.endpointPath);
+    _updateControllerIfNeeded(_modelController, settings.model);
+  }
+
+  void _updateControllerIfNeeded(
+    TextEditingController controller,
+    String newValue,
+  ) {
+    if (controller.text == newValue) {
+      return;
+    }
+    controller
+      ..text = newValue
+      ..selection = TextSelection.collapsed(offset: newValue.length);
+  }
+
+  String _providerLabel(AiProvider provider) {
+    switch (provider) {
+      case AiProvider.openAi:
+        return 'OpenAI互換';
+      case AiProvider.gemini:
+        return 'Gemini';
+    }
+  }
+
+  String _baseUrlHint(AiProvider provider) {
+    switch (provider) {
+      case AiProvider.openAi:
+        return 'https://api.openai.com/v1';
+      case AiProvider.gemini:
+        return 'https://generativelanguage.googleapis.com';
+    }
+  }
+
+  String _endpointHint(AiProvider provider) {
+    switch (provider) {
+      case AiProvider.openAi:
+        return '/chat/completions';
+      case AiProvider.gemini:
+        return '/v1beta/models/gemini-1.5-flash:generateContent';
+    }
+  }
+
+  String _modelHint(AiProvider provider) {
+    switch (provider) {
+      case AiProvider.openAi:
+        return 'gpt-4o-mini など';
+      case AiProvider.gemini:
+        return 'gemini-1.5-flash など';
+    }
   }
 }
