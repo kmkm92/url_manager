@@ -15,6 +15,17 @@ class SummaryRequest {
 
   final String url;
   final String title;
+
+  @override
+  int get hashCode => Object.hash(url, title);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    return other is SummaryRequest && other.url == url && other.title == title;
+  }
 }
 
 class SummaryGenerationException implements Exception {
@@ -208,13 +219,48 @@ Future<String> _requestGeminiSummary(
   throw SummaryGenerationException('要約結果が取得できませんでした。');
 }
 
-final urlSummaryProvider =
-    FutureProvider.autoDispose.family<String, SummaryRequest>((ref, request) async {
-  final settings = ref.watch(aiSettingsProvider);
-  if (!settings.isConfigured) {
-    throw SummaryGenerationException(
-        'AIの設定が完了していません。設定画面からAPIキー、ベースURL、エンドポイント、モデルを入力してください。');
-  }
+class SummaryCacheNotifier
+    extends StateNotifier<Map<SummaryRequest, AsyncValue<String>>> {
+  SummaryCacheNotifier(this._ref) : super(const {});
 
-  return _requestSummary(settings, request);
+  final Ref _ref;
+
+  Future<void> loadSummary(
+    SummaryRequest request, {
+    bool forceRefresh = false,
+  }) async {
+    final existing = state[request];
+    if (!forceRefresh && existing is AsyncData<String>) {
+      return;
+    }
+
+    state = {
+      ...state,
+      request: const AsyncValue<String>.loading(),
+    };
+
+    try {
+      final settings = _ref.read(aiSettingsProvider);
+      if (!settings.isConfigured) {
+        throw SummaryGenerationException(
+            'AIの設定が完了していません。設定画面からAPIキー、ベースURL、エンドポイント、モデルを入力してください。');
+      }
+
+      final summary = await _requestSummary(settings, request);
+      state = {
+        ...state,
+        request: AsyncValue<String>.data(summary),
+      };
+    } catch (error, stackTrace) {
+      state = {
+        ...state,
+        request: AsyncValue<String>.error(error, stackTrace),
+      };
+    }
+  }
+}
+
+final summaryCacheProvider = StateNotifierProvider<SummaryCacheNotifier,
+    Map<SummaryRequest, AsyncValue<String>>>((ref) {
+  return SummaryCacheNotifier(ref);
 });
