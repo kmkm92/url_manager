@@ -257,9 +257,8 @@ class SummaryCacheNotifier
             title.isNotEmpty &&
             summary is String &&
             summary.isNotEmpty) {
-          restoredEntries[
-            SummaryRequest(url: url, title: title),
-          ] = AsyncValue<String>.data(summary);
+          restoredEntries[SummaryRequest(url: url, title: title)] =
+              AsyncValue<String>.data(summary);
         }
       }
 
