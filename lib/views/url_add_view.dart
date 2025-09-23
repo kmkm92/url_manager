@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
@@ -13,11 +14,11 @@ class AddUrlFormView extends ConsumerStatefulWidget {
 }
 
 class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _urlController = TextEditingController();
   final _noteController = TextEditingController();
   final _tagsController = TextEditingController();
-  String? _errorMessage;
   bool _isStarred = false;
   bool _isRead = false;
   bool _isArchived = false;
@@ -80,115 +81,127 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
               topRight: Radius.circular(20.0),
             ),
           ),
-          child: ListView(
-            children: [
-              if (_errorMessage != null)
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
                 Padding(
-                  padding: const EdgeInsets.all(1.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          floatingLabelStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                          labelText: 'タイトル',
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value != null && value.length >= 100) {
+                            return '最大文字数は100文字です。';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _urlController,
+                        minLines: 1,
+                        maxLines: null,
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.url],
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: InputDecoration(
+                          floatingLabelStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                          labelText: 'URL',
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'URLを入力してください。';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _noteController,
+                        minLines: 1,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'メモ (Markdown 可)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _tagsController,
+                        decoration: const InputDecoration(
+                          labelText: 'タグ（カンマ区切り）',
+                          border: OutlineInputBorder(),
+                          helperText: '例: Flutter, Drift, 要約',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip(
+                            label: const Text('スター'),
+                            selected: _isStarred,
+                            onSelected: (value) {
+                              setState(() {
+                                _isStarred = value;
+                              });
+                            },
+                          ),
+                          FilterChip(
+                            label: const Text('既読'),
+                            selected: _isRead,
+                            onSelected: (value) {
+                              setState(() {
+                                _isRead = value;
+                              });
+                            },
+                          ),
+                          FilterChip(
+                            label: const Text('アーカイブ'),
+                            selected: _isArchived,
+                            onSelected: (value) {
+                              setState(() {
+                                _isArchived = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _addOrUpdateUrl,
+                        child: Text(widget.url == null ? '追加' : '更新'),
+                        style: ElevatedButton.styleFrom(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        floatingLabelStyle: TextStyle(
-                          color: Colors.black,
-                        ),
-                        labelText: 'タイトル',
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _urlController,
-                      minLines: 1,
-                      maxLines: null,
-                      decoration: InputDecoration(
-                        floatingLabelStyle: TextStyle(
-                          color: Colors.black,
-                        ),
-                        labelText: 'URL',
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _noteController,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'メモ (Markdown 可)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tagsController,
-                      decoration: const InputDecoration(
-                        labelText: 'タグ（カンマ区切り）',
-                        border: OutlineInputBorder(),
-                        helperText: '例: Flutter, Drift, 要約',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        FilterChip(
-                          label: const Text('スター'),
-                          selected: _isStarred,
-                          onSelected: (value) {
-                            setState(() {
-                              _isStarred = value;
-                            });
-                          },
-                        ),
-                        FilterChip(
-                          label: const Text('既読'),
-                          selected: _isRead,
-                          onSelected: (value) {
-                            setState(() {
-                              _isRead = value;
-                            });
-                          },
-                        ),
-                        FilterChip(
-                          label: const Text('アーカイブ'),
-                          selected: _isArchived,
-                          onSelected: (value) {
-                            setState(() {
-                              _isArchived = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _addOrUpdateUrl,
-                      child: Text(widget.url == null ? '追加' : '更新'),
-                      style: ElevatedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -196,18 +209,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   }
 
   Future<void> _addOrUpdateUrl() async {
-    if (_urlController.text.isEmpty) {
-      setState(() {
-        _errorMessage = 'URLを入力してください。';
-      });
-      return;
-    }
-    if (_titleController.text.length >= 100) {
-      setState(() {
-        _errorMessage = '最大文字数は100文字です。';
-      });
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final newUrl = Url(
       id: widget.url?.id,
