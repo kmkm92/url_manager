@@ -50,22 +50,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       }
     });
 
-    _textIntentSub =
-        ReceiveSharingIntent.instance.getTextStream().listen((String value) {
-      if (value.isEmpty) {
-        return;
-      }
-      addUrlFromShare(sharedText: value);
-    }, onError: (err) {
-      print("getTextStream error: $err");
-    });
-
-    ReceiveSharingIntent.instance.getInitialText().then((String? value) {
-      if (value == null || value.isEmpty) {
-        return;
-      }
-      addUrlFromShare(sharedText: value);
-    });
+    // Text の初期共有およびストリームは getInitialMedia / getMediaStream に統合済み
 
     loadUrls();
   }
@@ -299,8 +284,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     const leadingTrimChars = ['<', '(', '['];
     const trailingTrimChars = ['>', ')', ']'];
 
-    while (cleaned.isNotEmpty &&
-        leadingTrimChars.contains(cleaned[0])) {
+    while (cleaned.isNotEmpty && leadingTrimChars.contains(cleaned[0])) {
       cleaned = cleaned.substring(1);
     }
 
