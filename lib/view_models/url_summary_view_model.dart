@@ -90,8 +90,7 @@ String _stripHtmlTags(String html) {
       .replaceAll('&apos;', "'")
       .replaceAll('&#39;', "'")
       .replaceAll('&#34;', '"');
-  text = text.replaceAllMapped(
-      RegExp(r'&#(x?[0-9a-fA-F]+);'), (match) {
+  text = text.replaceAllMapped(RegExp(r'&#(x?[0-9a-fA-F]+);'), (match) {
     final value = match.group(1)!;
     try {
       final codePoint = value.toLowerCase().startsWith('x')
@@ -110,18 +109,18 @@ String _stripHtmlTags(String html) {
 
 String? _extractMetaDescription(String html) {
   final pattern = RegExp(
-    r'<meta[^>]*(?:name|property)=["\'](?:description|og:description|twitter:description)["\'][^>]*>',
+    r'''<meta[^>]*(?:name|property)=["'](?:description|og:description|twitter:description)["'][^>]*>''',
     caseSensitive: false,
   );
   final matches = pattern.allMatches(html);
   for (final match in matches) {
     final tag = match.group(0)!;
-    final contentMatch = RegExp('content="(.*?)"',
-            caseSensitive: false, dotAll: true)
-        .firstMatch(tag);
-    final singleQuoteContentMatch = RegExp("content='(.*?)'",
-            caseSensitive: false, dotAll: true)
-        .firstMatch(tag);
+    final contentMatch =
+        RegExp('content="(.*?)"', caseSensitive: false, dotAll: true)
+            .firstMatch(tag);
+    final singleQuoteContentMatch =
+        RegExp("content='(.*?)'", caseSensitive: false, dotAll: true)
+            .firstMatch(tag);
     final content = contentMatch?.group(1) ?? singleQuoteContentMatch?.group(1);
     if (content != null && content.trim().isNotEmpty) {
       final normalized = _normalizeArticleText(_stripHtmlTags(content));
@@ -147,9 +146,7 @@ Future<String> _fetchArticleText(String url) async {
 
   http.Response response;
   try {
-    response = await http
-        .get(uri)
-        .timeout(const Duration(seconds: 20));
+    response = await http.get(uri).timeout(const Duration(seconds: 20));
   } on TimeoutException {
     throw SummaryGenerationException('記事の取得がタイムアウトしました。通信環境を確認してください。');
   } catch (error) {
@@ -170,8 +167,7 @@ Future<String> _fetchArticleText(String url) async {
           caseSensitive: false, dotAll: true)
       .firstMatch(body);
   final extractedSection = articleMatch?.group(1) ?? body;
-  final normalized =
-      _normalizeArticleText(_stripHtmlTags(extractedSection));
+  final normalized = _normalizeArticleText(_stripHtmlTags(extractedSection));
   if (normalized.isNotEmpty) {
     return normalized;
   }
