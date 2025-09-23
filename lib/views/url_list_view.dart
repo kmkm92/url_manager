@@ -662,7 +662,7 @@ class _UrlCard extends ConsumerWidget {
                         onPressed: () {
                           ref
                               .read(urlListProvider.notifier)
-                              .opemUrl(context, url.url);
+                              .opemUrl(context, url);
                         },
                         icon: const Icon(Icons.open_in_browser),
                         label: const Text('開く'),
@@ -686,7 +686,7 @@ class _UrlCard extends ConsumerWidget {
   ) {
     switch (action) {
       case _OverflowAction.openExternal:
-        ref.read(urlListProvider.notifier).opemUrl(context, url.url);
+        ref.read(urlListProvider.notifier).opemUrl(context, url);
         break;
       case _OverflowAction.copyLink:
         Clipboard.setData(ClipboardData(text: url.url));
