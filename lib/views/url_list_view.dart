@@ -248,6 +248,18 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               availableTags: availableTags,
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '検索結果: ${filteredUrls.length} / ${urls.length} 件',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+          ),
           if (filteredUrls.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -318,11 +330,62 @@ class _FilterSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final domainFilter = ref.watch(domainFilterProvider);
+    final tagFilter = ref.watch(tagFilterProvider);
+    final hasStatusFilter = statusFilters.isNotEmpty;
+    final hasDomainFilter = domainFilter != null && domainFilter.isNotEmpty;
+    final hasTagFilter = tagFilter != null && tagFilter.isNotEmpty;
+    final hasActiveFilter =
+        hasStatusFilter || hasDomainFilter || hasTagFilter;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (hasActiveFilter) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (hasStatusFilter)
+                        for (final filter in statusFilters)
+                          Chip(
+                            visualDensity: VisualDensity.compact,
+                            avatar: Icon(filter.icon, size: 16),
+                            label: Text(filter.label),
+                          ),
+                      if (hasDomainFilter)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          avatar: const Icon(Icons.language, size: 16),
+                          label: Text('ドメイン: $domainFilter'),
+                        ),
+                      if (hasTagFilter)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          avatar: const Icon(Icons.sell_outlined, size: 16),
+                          label: Text('タグ: $tagFilter'),
+                        ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    ref.read(statusFilterProvider.notifier).state = {};
+                    ref.read(domainFilterProvider.notifier).state = null;
+                    ref.read(tagFilterProvider.notifier).state = null;
+                  },
+                  child: const Text('フィルタをすべて解除'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -364,7 +427,7 @@ class _FilterSection extends ConsumerWidget {
                 children: [
                   ChoiceChip(
                     label: const Text('すべて'),
-                    selected: ref.watch(domainFilterProvider) == null,
+                    selected: domainFilter == null,
                     onSelected: (value) {
                       if (value) {
                         ref.read(domainFilterProvider.notifier).state = null;
@@ -375,7 +438,7 @@ class _FilterSection extends ConsumerWidget {
                   for (final domain in uniqueDomains) ...[
                     ChoiceChip(
                       label: Text(domain),
-                      selected: ref.watch(domainFilterProvider) == domain,
+                      selected: domainFilter == domain,
                       onSelected: (value) {
                         ref.read(domainFilterProvider.notifier).state =
                             value ? domain : null;
@@ -400,7 +463,7 @@ class _FilterSection extends ConsumerWidget {
                 children: [
                   ChoiceChip(
                     label: const Text('すべて'),
-                    selected: ref.watch(tagFilterProvider) == null,
+                    selected: tagFilter == null,
                     onSelected: (value) {
                       if (value) {
                         ref.read(tagFilterProvider.notifier).state = null;
@@ -411,7 +474,7 @@ class _FilterSection extends ConsumerWidget {
                   for (final tag in availableTags) ...[
                     ChoiceChip(
                       label: Text(tag),
-                      selected: ref.watch(tagFilterProvider) == tag,
+                      selected: tagFilter == tag,
                       onSelected: (value) {
                         ref.read(tagFilterProvider.notifier).state =
                             value ? tag : null;
