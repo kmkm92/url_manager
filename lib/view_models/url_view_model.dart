@@ -75,18 +75,34 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     // await sortUrl();
   }
 
-  Future<void> opemUrl(BuildContext context, stringUrl) async {
-    final url = Uri.parse(stringUrl);
-    final _canLaunch = await canLaunchUrl(url);
+  Future<void> opemUrl(BuildContext context, Url target) async {
+    final uri = Uri.tryParse(target.url);
+    if (uri == null) {
+      return;
+    }
 
-    if (!_canLaunch) {
+    final canLaunch = await canLaunchUrl(uri);
+
+    if (!canLaunch) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('urlが開けません'),
         ),
       );
+      return;
     }
-    launchUrl(url);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (launched && !target.isRead) {
+      await markAsRead(target);
+    }
+  }
+
+  Future<void> markAsRead(Url url) async {
+    if (url.isRead) {
+      return;
+    }
+    final db = await _ref.read(provideDatabase.future);
+    await db.updateUrl(url.copyWith(isRead: true));
     await loadUrls();
   }
 
