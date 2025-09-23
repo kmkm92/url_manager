@@ -47,23 +47,164 @@ Uri _buildEndpointUri(String baseUrl, String endpointPath) {
   return Uri.parse('$trimmedBase/$sanitizedPath');
 }
 
+const _maxArticleCharacters = 6000;
+
+String _normalizeArticleText(String text) {
+  if (text.trim().isEmpty) {
+    return '';
+  }
+  final normalizedLines = text
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList(growable: false);
+  if (normalizedLines.isEmpty) {
+    return '';
+  }
+  final normalized = normalizedLines.join('\n').trim();
+  if (normalized.length <= _maxArticleCharacters) {
+    return normalized;
+  }
+  return normalized.substring(0, _maxArticleCharacters);
+}
+
+String _stripHtmlTags(String html) {
+  var text = html;
+  text = text.replaceAll(RegExp(r'<!--.*?-->', dotAll: true), ' ');
+  text = text.replaceAll(
+      RegExp(r'<(script|style|noscript|template)[^>]*>.*?</\1>',
+          caseSensitive: false, dotAll: true),
+      ' ');
+  text = text.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+  text = text.replaceAll(
+      RegExp(r'</(p|div|section|article|h[1-6]|li)[^>]*>',
+          caseSensitive: false),
+      '\n');
+  text = text.replaceAll(RegExp(r'<[^>]+>'), ' ');
+  text = text
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&apos;', "'")
+      .replaceAll('&#39;', "'")
+      .replaceAll('&#34;', '"');
+  text = text.replaceAllMapped(
+      RegExp(r'&#(x?[0-9a-fA-F]+);'), (match) {
+    final value = match.group(1)!;
+    try {
+      final codePoint = value.toLowerCase().startsWith('x')
+          ? int.parse(value.substring(1), radix: 16)
+          : int.parse(value, radix: 10);
+      if (codePoint <= 0) {
+        return ' ';
+      }
+      return String.fromCharCode(codePoint);
+    } catch (_) {
+      return ' ';
+    }
+  });
+  return text;
+}
+
+String? _extractMetaDescription(String html) {
+  final pattern = RegExp(
+    r'<meta[^>]*(?:name|property)=["\'](?:description|og:description|twitter:description)["\'][^>]*>',
+    caseSensitive: false,
+  );
+  final matches = pattern.allMatches(html);
+  for (final match in matches) {
+    final tag = match.group(0)!;
+    final contentMatch = RegExp('content="(.*?)"',
+            caseSensitive: false, dotAll: true)
+        .firstMatch(tag);
+    final singleQuoteContentMatch = RegExp("content='(.*?)'",
+            caseSensitive: false, dotAll: true)
+        .firstMatch(tag);
+    final content = contentMatch?.group(1) ?? singleQuoteContentMatch?.group(1);
+    if (content != null && content.trim().isNotEmpty) {
+      final normalized = _normalizeArticleText(_stripHtmlTags(content));
+      if (normalized.isNotEmpty) {
+        return normalized;
+      }
+    }
+  }
+  return null;
+}
+
+Future<String> _fetchArticleText(String url) async {
+  var uri = Uri.tryParse(url);
+  if (uri == null) {
+    throw SummaryGenerationException('URLの形式が正しくないため記事本文を取得できませんでした。');
+  }
+  if (!uri.hasScheme) {
+    uri = Uri.tryParse('https://$url') ?? uri.replace(scheme: 'https');
+  }
+  if (!uri.hasAuthority) {
+    throw SummaryGenerationException('URLの形式が正しくないため記事本文を取得できませんでした。');
+  }
+
+  http.Response response;
+  try {
+    response = await http
+        .get(uri)
+        .timeout(const Duration(seconds: 20));
+  } on TimeoutException {
+    throw SummaryGenerationException('記事の取得がタイムアウトしました。通信環境を確認してください。');
+  } catch (error) {
+    throw SummaryGenerationException('記事の取得に失敗しました: $error');
+  }
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw SummaryGenerationException(
+        '記事の取得に失敗しました (status: ${response.statusCode}).');
+  }
+
+  final body = response.body;
+  if (body.trim().isEmpty) {
+    throw SummaryGenerationException('記事の本文が空でした。');
+  }
+
+  final articleMatch = RegExp(r'<article[^>]*>(.*?)</article>',
+          caseSensitive: false, dotAll: true)
+      .firstMatch(body);
+  final extractedSection = articleMatch?.group(1) ?? body;
+  final normalized =
+      _normalizeArticleText(_stripHtmlTags(extractedSection));
+  if (normalized.isNotEmpty) {
+    return normalized;
+  }
+
+  final metaDescription = _extractMetaDescription(body);
+  if (metaDescription != null && metaDescription.isNotEmpty) {
+    return metaDescription;
+  }
+
+  throw SummaryGenerationException('記事の本文を取得できませんでした。');
+}
+
 Future<String> _requestSummary(
   AiSettings settings,
   SummaryRequest request,
 ) async {
+  final articleText = await _fetchArticleText(request.url);
   switch (settings.provider) {
     case AiProvider.openAi:
-      return _requestOpenAiSummary(settings, request);
+      return _requestOpenAiSummary(settings, request, articleText);
     case AiProvider.gemini:
-      return _requestGeminiSummary(settings, request);
+      return _requestGeminiSummary(settings, request, articleText);
   }
 }
 
 Future<String> _requestOpenAiSummary(
   AiSettings settings,
   SummaryRequest request,
+  String articleText,
 ) async {
   final endpoint = _buildEndpointUri(settings.baseUrl, settings.endpointPath);
+  final displayTitle =
+      request.title.trim().isEmpty ? request.url : request.title.trim();
 
   final payload = <String, dynamic>{
     'model': settings.model,
@@ -76,7 +217,7 @@ Future<String> _requestOpenAiSummary(
       {
         'role': 'user',
         'content':
-            '次のURLの内容を短く要約してください。要約はMarkdown形式で出力し、重要なポイントを箇条書きで示してください。URL: ${request.url}\n\n参考情報: ${request.title}',
+            '次の記事の本文を短く要約してください。要約はMarkdown形式で出力し、重要なポイントを箇条書きで示してください。記事タイトル: $displayTitle\n\n本文:\n$articleText',
       },
     ],
     'temperature': 0.3,
@@ -134,6 +275,7 @@ Future<String> _requestOpenAiSummary(
 Future<String> _requestGeminiSummary(
   AiSettings settings,
   SummaryRequest request,
+  String articleText,
 ) async {
   final endpoint = _buildEndpointUri(settings.baseUrl, settings.endpointPath);
   final queryParameters = {
@@ -141,6 +283,8 @@ Future<String> _requestGeminiSummary(
     'key': settings.apiKey,
   };
   final uri = endpoint.replace(queryParameters: queryParameters);
+  final displayTitle =
+      request.title.trim().isEmpty ? request.url : request.title.trim();
 
   final payload = <String, dynamic>{
     'systemInstruction': {
@@ -158,7 +302,7 @@ Future<String> _requestGeminiSummary(
         'parts': [
           {
             'text':
-                '次のURLの内容を短く要約してください。要約はMarkdown形式で出力し、重要なポイントを箇条書きで示してください。URL: ${request.url}\n\n参考情報: ${request.title}',
+                '次の記事の本文を短く要約してください。要約はMarkdown形式で出力し、重要なポイントを箇条書きで示してください。記事タイトル: $displayTitle\n\n本文:\n$articleText',
           },
         ],
       },
