@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/view_models/url_summary_view_model.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
@@ -144,7 +143,9 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                 children: [
                   FilledButton.icon(
                     onPressed: () {
-                      _openUrl(latest.url);
+                      ref
+                          .read(urlListProvider.notifier)
+                          .opemUrl(context, latest);
                     },
                     icon: const Icon(Icons.open_in_browser),
                     label: const Text('ブラウザで開く'),
@@ -353,16 +354,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
     );
   }
 
-  Future<void> _openUrl(String raw) async {
-    final uri = Uri.tryParse(raw);
-    if (uri == null) {
-      return;
-    }
-    if (!await canLaunchUrl(uri)) {
-      return;
-    }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 }
 
 class _SummaryBlock extends StatelessWidget {
