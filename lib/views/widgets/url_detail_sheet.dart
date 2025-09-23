@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_summary_view_model.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 import 'package:url_manager/views/url_summary_view.dart';
@@ -289,13 +290,11 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                   spacing: 8,
                   runSpacing: 4,
                   children: [
-                    for (final tag
-                        in _tagsController.text.split(',').map((t) => t.trim()))
-                      if (tag.isNotEmpty)
-                        Chip(
-                          avatar: const Icon(Icons.tag, size: 16),
-                          label: Text(tag),
-                        ),
+                    for (final tag in parseTags(_tagsController.text))
+                      Chip(
+                        avatar: const Icon(Icons.tag, size: 16),
+                        label: Text(tag),
+                      ),
                   ],
                 ),
               if (duplicates.isNotEmpty) ...[

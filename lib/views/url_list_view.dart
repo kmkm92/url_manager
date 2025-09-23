@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_summary_view_model.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 import 'package:url_manager/views/ai_settings_view.dart';
@@ -848,11 +849,7 @@ class _Thumbnail extends StatelessWidget {
 enum _OverflowAction { openExternal, copyLink, share, toggleRead, edit, toggleArchive }
 
 List<String> _extractTags(String raw) {
-  return raw
-      .split(',')
-      .map((tag) => tag.trim())
-      .where((tag) => tag.isNotEmpty)
-      .toList();
+  return parseTags(raw);
 }
 
 String _relativeTime(DateTime savedAt) {
