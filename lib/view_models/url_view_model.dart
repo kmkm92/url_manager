@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 
 final urlListProvider =
     StateNotifierProvider<UrlListNotifier, List<Url>>((ref) {
@@ -176,12 +177,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   }
 
   Url _decorateUrl(Url url) {
-    final normalizedTags = url.tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toSet()
-        .join(', ');
+    final normalizedTags = parseTags(url.tags).toSet().join(', ');
     return url.copyWith(
       domain: _deriveDomain(url.url),
       tags: normalizedTags,
