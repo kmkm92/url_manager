@@ -53,19 +53,24 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(30.0),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.check),
-              onPressed: _addOrUpdateUrl,
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surface,
+        elevation: 0,
+        title: const Text('URLを保存'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _addOrUpdateUrl,
+          ),
+        ],
       ),
       body: GestureDetector(
         onTap: () {
