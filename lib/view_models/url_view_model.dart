@@ -16,6 +16,7 @@ final urlListProvider =
 class UrlListNotifier extends StateNotifier<List<Url>> {
   final Ref _ref;
   StreamSubscription? _intentSub;
+  StreamSubscription<String?>? _textIntentSub;
   final List<SharedMediaFile> _sharedFiles = [];
   Url? _recentlyDeleted;
 
@@ -25,7 +26,10 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       _sharedFiles.clear();
       _sharedFiles.addAll(value);
       if (_sharedFiles.isNotEmpty) {
-        addUrlFromShare(_sharedFiles.first.message!, _sharedFiles.first.path);
+        addUrlFromShare(
+          message: _sharedFiles.first.message,
+          url: _sharedFiles.first.path,
+        );
       }
     }, onError: (err) {
       print("getMediaStream error: $err");
@@ -37,8 +41,25 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       _sharedFiles.clear();
       _sharedFiles.addAll(value);
       if (_sharedFiles.isNotEmpty) {
-        addUrlFromShare(_sharedFiles.first.message!, _sharedFiles.first.path);
+        addUrlFromShare(
+          message: _sharedFiles.first.message,
+          url: _sharedFiles.first.path,
+        );
       }
+    });
+
+    _textIntentSub =
+        ReceiveSharingIntent.instance.getTextStream().listen((String value) {
+      addUrlFromShare(sharedText: value);
+    }, onError: (err) {
+      print("getTextStream error: $err");
+    });
+
+    ReceiveSharingIntent.instance.getInitialText().then((String? value) {
+      if (value == null || value.isEmpty) {
+        return;
+      }
+      addUrlFromShare(sharedText: value);
     });
 
     loadUrls();
@@ -57,12 +78,29 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     await loadUrls();
   }
 
-  Future<void> addUrlFromShare(String message, String url) async {
+  Future<void> addUrlFromShare({
+    String? message,
+    String? url,
+    String? sharedText,
+  }) async {
+    final normalizedMessage = _normalizeSharedText(message);
+    final normalizedSharedText = _normalizeSharedText(sharedText);
+    final extractedUrl = _extractValidUrl(url) ??
+        _extractValidUrl(normalizedMessage) ??
+        _extractValidUrl(normalizedSharedText);
+
+    if (extractedUrl == null) {
+      return;
+    }
+
+    final resolvedMessage =
+        normalizedMessage ?? normalizedSharedText ?? extractedUrl;
+
     final newUrl = Url(
-      message: message,
-      url: url,
+      message: resolvedMessage,
+      url: extractedUrl,
       details: '',
-      domain: _deriveDomain(url),
+      domain: _deriveDomain(extractedUrl),
       tags: '',
       isStarred: false,
       isRead: false,
@@ -176,6 +214,13 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
         toRestore.copyWith(id: const Value(null), savedAt: DateTime.now()));
   }
 
+  @override
+  void dispose() {
+    _intentSub?.cancel();
+    _textIntentSub?.cancel();
+    super.dispose();
+  }
+
   Url _decorateUrl(Url url) {
     final normalizedTags = parseTags(url.tags).toSet().join(', ');
     return url.copyWith(
@@ -193,4 +238,77 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       return '';
     }
   }
+
+  String? _normalizeSharedText(String? text) {
+    final trimmed = text?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return null;
+    }
+    return trimmed;
+  }
+
+  String? _extractValidUrl(String? text) {
+    final normalized = _normalizeSharedText(text);
+    if (normalized == null) {
+      return null;
+    }
+
+    final directMatch = _sanitizeUrl(normalized);
+    if (directMatch != null) {
+      return directMatch;
+    }
+
+    final match = _urlRegExp.firstMatch(normalized);
+    if (match != null) {
+      return _sanitizeUrl(match.group(0));
+    }
+    return null;
+  }
+
+  String? _sanitizeUrl(String? text) {
+    if (text == null) {
+      return null;
+    }
+
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    final firstSegment = trimmed.split(RegExp('\\s+')).first;
+    var cleaned = firstSegment;
+
+    const leadingTrimChars = ['<', '(', '['];
+    const trailingTrimChars = ['>', ')', ']'];
+
+    while (cleaned.isNotEmpty &&
+        leadingTrimChars.contains(cleaned[0])) {
+      cleaned = cleaned.substring(1);
+    }
+
+    while (cleaned.isNotEmpty &&
+        trailingTrimChars.contains(cleaned[cleaned.length - 1])) {
+      cleaned = cleaned.substring(0, cleaned.length - 1);
+    }
+
+    Uri? uri = Uri.tryParse(cleaned);
+    if (uri != null && uri.hasScheme) {
+      final scheme = uri.scheme.toLowerCase();
+      if (scheme == 'http' || scheme == 'https') {
+        return uri.toString();
+      }
+    }
+
+    if ((uri == null || !uri.hasScheme) && cleaned.startsWith('www.')) {
+      uri = Uri.tryParse('https://$cleaned');
+      if (uri != null) {
+        return uri.toString();
+      }
+    }
+
+    return null;
+  }
+
+  static final RegExp _urlRegExp =
+      RegExp('https?://[^\\s]+', caseSensitive: false);
 }
