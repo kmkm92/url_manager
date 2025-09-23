@@ -173,17 +173,26 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           url.details.toLowerCase().contains(searchQuery.toLowerCase()) ||
           tags.any((tag) => tag.toLowerCase().contains(searchQuery.toLowerCase()));
 
-      final matchesStatus = statusFilters.isEmpty ||
-          statusFilters.any((filter) {
-            switch (filter) {
-              case StatusFilter.unread:
-                return !url.isRead && !url.isArchived;
-              case StatusFilter.starred:
-                return url.isStarred && !url.isArchived;
-              case StatusFilter.archived:
-                return url.isArchived;
-            }
-          });
+      final matchesStatus = () {
+        if (statusFilters.isEmpty) {
+          return !url.isArchived;
+        }
+
+        if (!statusFilters.contains(StatusFilter.archived) && url.isArchived) {
+          return false;
+        }
+
+        return statusFilters.any((filter) {
+          switch (filter) {
+            case StatusFilter.unread:
+              return !url.isRead && !url.isArchived;
+            case StatusFilter.starred:
+              return url.isStarred && !url.isArchived;
+            case StatusFilter.archived:
+              return url.isArchived;
+          }
+        });
+      }();
 
       final matchesDomain =
           domainFilter == null || domainFilter.isEmpty || url.domain == domainFilter;
