@@ -67,10 +67,24 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     setState(() {});
   }
 
+  // URLリストから既存タグを抽出し、重複排除したソート済み集合にして返す
+  SplayTreeSet<String> _collectExistingTags(Iterable<Url> urls) {
+    final sortedTags = SplayTreeSet<String>();
+    for (final url in urls) {
+      sortedTags.addAll(parseTags(url.tags));
+    }
+    return sortedTags;
+  }
+
+  // 現在入力済みのタグをセットとして取得し、ChoiceChipの状態判定に用いる
+  Set<String> _currentTagSelection() {
+    return parseTags(_tagsController.text).toSet();
+  }
+
   // 既存タグ候補のチップをタップした際に、テキストフィールドのタグ文字列を更新する処理
   void _toggleTag(String tag) {
-    final currentTags = parseTags(_tagsController.text);
-    final sortedTagSet = SplayTreeSet<String>.from(currentTags);
+    final sortedTagSet = SplayTreeSet<String>
+      ..addAll(parseTags(_tagsController.text));
 
     if (sortedTagSet.contains(tag)) {
       sortedTagSet.remove(tag);
@@ -91,12 +105,9 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   Widget build(BuildContext context) {
     final urls = ref.watch(urlListProvider);
     // 既存URLのタグを収集してソート済み集合にまとめる
-    final sortedExistingTags = SplayTreeSet<String>();
-    for (final url in urls) {
-      sortedExistingTags.addAll(parseTags(url.tags));
-    }
+    final sortedExistingTags = _collectExistingTags(urls);
     // 現在入力されているタグをセット化し、ChoiceChipの選択状態に反映する
-    final currentTagSet = parseTags(_tagsController.text).toSet();
+    final currentTagSet = _currentTagSelection();
 
     // 入力フォーム全体のレイアウトを構築する
     return Scaffold(
