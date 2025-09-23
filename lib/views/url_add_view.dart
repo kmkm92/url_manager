@@ -1,6 +1,10 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
 class AddUrlFormView extends ConsumerStatefulWidget {
@@ -35,11 +39,13 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
       _isArchived = widget.url!.isArchived;
     }
     _urlController.addListener(_updateUrlFieldHeight);
+    _tagsController.addListener(_onTagsChanged);
   }
 
   @override
   void dispose() {
     _urlController.removeListener(_updateUrlFieldHeight);
+    _tagsController.removeListener(_onTagsChanged);
     _titleController.dispose();
     _urlController.dispose();
     _noteController.dispose();
@@ -51,8 +57,38 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     setState(() {});
   }
 
+  void _onTagsChanged() {
+    setState(() {});
+  }
+
+  void _toggleTag(String tag) {
+    final currentTags = parseTags(_tagsController.text);
+    final sortedTagSet = SplayTreeSet<String>.from(currentTags);
+
+    if (sortedTagSet.contains(tag)) {
+      sortedTagSet.remove(tag);
+    } else {
+      sortedTagSet.add(tag);
+    }
+
+    final updatedText = sortedTagSet.join(', ');
+    setState(() {
+      _tagsController.text = updatedText;
+      _tagsController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _tagsController.text.length),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final urls = ref.watch(urlListProvider);
+    final sortedExistingTags = SplayTreeSet<String>();
+    for (final url in urls) {
+      sortedExistingTags.addAll(parseTags(url.tags));
+    }
+    final currentTagSet = parseTags(_tagsController.text).toSet();
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(30.0),
@@ -142,6 +178,24 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         helperText: '例: Flutter, Drift, 要約',
                       ),
                     ),
+                    if (sortedExistingTags.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final tag in sortedExistingTags)
+                              ChoiceChip(
+                                label: Text(tag),
+                                selected: currentTagSet.contains(tag),
+                                onSelected: (_) => _toggleTag(tag),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 12,
