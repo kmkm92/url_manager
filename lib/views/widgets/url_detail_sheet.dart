@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -375,9 +376,11 @@ class _SummaryBlock extends StatelessWidget {
             color: Theme.of(context).colorScheme.surfaceVariant,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            summary,
-            style: Theme.of(context).textTheme.bodyMedium,
+          child: MarkdownBody(
+            data: summary,
+            styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+              p: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         );
       },
