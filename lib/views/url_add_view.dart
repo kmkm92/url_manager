@@ -7,6 +7,7 @@ import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
+// URLの追加・編集フォーム画面全体を管理するステートフルウィジェット
 class AddUrlFormView extends ConsumerStatefulWidget {
   final Url? url;
 
@@ -29,6 +30,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   @override
   void initState() {
     super.initState();
+    // 編集時には既存データを各入力欄に反映する
     if (widget.url != null) {
       _titleController.text = widget.url!.message;
       _urlController.text = widget.url!.url;
@@ -38,12 +40,14 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
       _isRead = widget.url!.isRead;
       _isArchived = widget.url!.isArchived;
     }
+    // フィールドの表示更新のためにリスナーを設定
     _urlController.addListener(_updateUrlFieldHeight);
     _tagsController.addListener(_onTagsChanged);
   }
 
   @override
   void dispose() {
+    // リスナーの解除とコントローラーの破棄でメモリリークを防ぐ
     _urlController.removeListener(_updateUrlFieldHeight);
     _tagsController.removeListener(_onTagsChanged);
     _titleController.dispose();
@@ -53,14 +57,17 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     super.dispose();
   }
 
+  // URL入力欄の高さを動的に再描画するためのリスナー
   void _updateUrlFieldHeight() {
     setState(() {});
   }
 
+  // タグ入力欄の変更を監視し、チップの選択状態を更新する
   void _onTagsChanged() {
     setState(() {});
   }
 
+  // 既存タグ候補のチップをタップした際に、テキストフィールドのタグ文字列を更新する処理
   void _toggleTag(String tag) {
     final currentTags = parseTags(_tagsController.text);
     final sortedTagSet = SplayTreeSet<String>.from(currentTags);
@@ -83,12 +90,15 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   @override
   Widget build(BuildContext context) {
     final urls = ref.watch(urlListProvider);
+    // 既存URLのタグを収集してソート済み集合にまとめる
     final sortedExistingTags = SplayTreeSet<String>();
     for (final url in urls) {
       sortedExistingTags.addAll(parseTags(url.tags));
     }
+    // 現在入力されているタグをセット化し、ChoiceChipの選択状態に反映する
     final currentTagSet = parseTags(_tagsController.text).toSet();
 
+    // 入力フォーム全体のレイアウトを構築する
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(30.0),
@@ -182,6 +192,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                       const SizedBox(height: 12),
                       Align(
                         alignment: Alignment.centerLeft,
+                        // 既存タグ候補を一覧で表示し、タップで入力欄へ反映する
                         child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -197,6 +208,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                       ),
                     ],
                     const SizedBox(height: 16),
+                    // ステータスに紐づくフィルターチップ群
                     Wrap(
                       spacing: 12,
                       runSpacing: 8,
@@ -249,6 +261,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     );
   }
 
+  // 入力された内容でURLレコードを作成・更新し、状態管理へ反映する
   Future<void> _addOrUpdateUrl() async {
     if (_urlController.text.isEmpty) {
       setState(() {
