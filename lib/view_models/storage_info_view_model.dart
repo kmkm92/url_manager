@@ -1,6 +1,6 @@
 /// URLストレージの使用状況を算出するProvider群を定義するファイル。
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_manager/database.g.dart';
+import 'package:url_manager/database.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
 /// UI側に渡すストレージ情報のモデル。
