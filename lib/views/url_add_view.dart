@@ -83,7 +83,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   // 既存タグ候補のチップをタップした際に、テキストフィールドのタグ文字列を更新する処理
   void _toggleTag(String tag) {
-    final sortedTagSet = SplayTreeSet<String>
+    final sortedTagSet = SplayTreeSet<String>()
       ..addAll(parseTags(_tagsController.text));
 
     if (sortedTagSet.contains(tag)) {
