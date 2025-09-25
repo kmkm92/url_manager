@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_manager/view_models/ai_settings_view_model.dart';
+import 'package:url_manager/view_models/settings_preferences_view_model.dart';
 import 'package:url_manager/view_models/storage_info_view_model.dart';
 import 'package:url_manager/views/ai_settings_view.dart';
 import 'package:url_manager/views/status_overview_view.dart';
@@ -19,6 +20,15 @@ class SettingsRootView extends ConsumerWidget {
     // Providerから設定状況とストレージ情報を取得。
     final aiSettings = ref.watch(aiSettingsProvider);
     final storageInfo = ref.watch(storageInfoProvider);
+    final settingsPreferences =
+        ref.watch(settingsPreferencesProvider); // 個人設定の現在値を取得。
+
+    // 保存完了を利用者に通知するスナックバー表示用のヘルパー。
+    void showSavedSnackBar(String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
 
     final missingSettings = _extractMissingSettings(aiSettings);
     final lastSyncedAt = storageInfo.lastSyncedAt;
@@ -99,34 +109,117 @@ class SettingsRootView extends ConsumerWidget {
                   },
                 ),
                 const Divider(height: 1),
-                // Wi-Fi時のみ要約リクエスト設定。
+                // Wi-Fi時のみ要約リクエスト設定。StateNotifierの値と同期させる。
                 SwitchListTile.adaptive(
-                  value: true,
-                  onChanged: (_) {},
+                  value: settingsPreferences.wifiOnlySummaries,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updateWifiOnlySummaries(value);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showSavedSnackBar('通信設定を保存しました');
+                  },
                   title: Text(
                     'Wi-Fi時のみ要約リクエスト',
                     textScaler: textScaler,
                     style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    '通信量を抑えたいときに有効化',
+                    settingsPreferences.wifiOnlySummaries
+                        ? 'Wi-Fi接続時のみAI要約リクエストを送信します'
+                        : 'モバイルデータ通信でもAI要約リクエストを送信します',
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
-                // Dynamic Type優先設定。
+                // Dynamic Type優先設定。メディアクエリとの整合を保つ。
                 SwitchListTile.adaptive(
-                  value: true,
-                  onChanged: (_) {},
+                  value: settingsPreferences.preferDynamicType,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updatePreferDynamicType(value);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showSavedSnackBar('文字サイズ設定を保存しました');
+                  },
                   title: Text(
                     'Dynamic Typeを優先',
                     textScaler: textScaler,
                     style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    'OSの文字サイズ設定に追従',
+                    settingsPreferences.preferDynamicType
+                        ? 'OSの文字サイズ設定に追従します'
+                        : 'アプリ独自のタイポグラフィを優先します',
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
+                  ),
+                ),
+                // ダークテーマの強制適用設定。デザインポリシーをユーザーに委ねる。
+                SwitchListTile.adaptive(
+                  value: settingsPreferences.enableDarkTheme,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updateEnableDarkTheme(value);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showSavedSnackBar('テーマ設定を保存しました');
+                  },
+                  title: Text(
+                    '常にダークテーマを使用',
+                    textScaler: textScaler,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  subtitle: Text(
+                    settingsPreferences.enableDarkTheme
+                        ? '常時ダークテーマで表示します'
+                        : 'システムテーマに合わせて表示します',
+                    textScaler: textScaler,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+                const Divider(height: 1),
+                // 起動時に表示するタブ設定。Dropdownで即時保存する。
+                ListTile(
+                  leading: const Icon(Icons.tab),
+                  title: Text(
+                    '起動時に開くタブ',
+                    textScaler: textScaler,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  subtitle: Text(
+                    '${settingsPreferences.startupTab.label}を既定で表示します',
+                    textScaler: textScaler,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: DropdownButton<StartupTab>(
+                    value: settingsPreferences.startupTab,
+                    onChanged: (tab) async {
+                      if (tab == null) {
+                        return;
+                      }
+                      await ref
+                          .read(settingsPreferencesProvider.notifier)
+                          .updateStartupTab(tab);
+                      if (!context.mounted) {
+                        return;
+                      }
+                      showSavedSnackBar('起動タブ設定を保存しました');
+                    },
+                    items: StartupTab.values
+                        .map(
+                          (tab) => DropdownMenuItem<StartupTab>(
+                            value: tab,
+                            child: Text(tab.label),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
               ],
