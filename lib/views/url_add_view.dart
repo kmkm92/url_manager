@@ -113,8 +113,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: colorScheme.primary, width: 2),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
                           fillColor: colorScheme.surfaceVariant,
@@ -146,8 +146,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: colorScheme.primary, width: 2),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
                           fillColor: colorScheme.surfaceVariant,
@@ -172,8 +172,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: colorScheme.primary, width: 2),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
                           fillColor: colorScheme.surfaceVariant,
@@ -190,8 +190,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: colorScheme.primary, width: 2),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
                           ),
                           helperText: '例: Flutter, Drift, 要約',
                           filled: true,
