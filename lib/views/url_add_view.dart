@@ -1,8 +1,10 @@
 // URL保存フォーム画面を描画し、入力内容の保存を担うウィジェット。
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
 class AddUrlFormView extends ConsumerStatefulWidget {
@@ -55,7 +57,16 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   @override
   Widget build(BuildContext context) {
+
     // 画面描画時に利用するテーマ色情報をまとめて取得しておく。
+
+    // URLリストの監視を行い、既存タグ候補を抽出する
+    final urls = ref.watch(urlListProvider);
+    final existingTags = SplayTreeSet<String>.from(
+      urls.expand((url) => parseTags(url.tags)),
+    );
+    final currentTags = parseTags(_tagsController.text);
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -198,6 +209,23 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           fillColor: colorScheme.surfaceVariant,
                         ),
                       ),
+                      if (existingTags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        // 既存タグから選択できるチップ一覧を表示
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: existingTags
+                              .map(
+                                (tag) => ChoiceChip(
+                                  label: Text(tag),
+                                  selected: currentTags.contains(tag),
+                                  onSelected: (_) => _toggleTag(tag),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 12,
@@ -273,5 +301,26 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     );
     ref.read(urlListProvider.notifier).addOrUpdateUrl(newUrl);
     Navigator.pop(context);
+  }
+
+  // チップタップ時にタグ入力欄のテキストを整形しながら更新する
+  void _toggleTag(String tag) {
+    final normalizedTag = tag.trim();
+    final tags = LinkedHashSet<String>.from(parseTags(_tagsController.text));
+
+    if (tags.contains(normalizedTag)) {
+      tags.remove(normalizedTag);
+    } else {
+      tags.add(normalizedTag);
+    }
+
+    setState(() {
+      final updated = tags.join(', ');
+      _tagsController
+        ..text = updated
+        ..selection = TextSelection.fromPosition(
+          TextPosition(offset: updated.length),
+        );
+    });
   }
 }
