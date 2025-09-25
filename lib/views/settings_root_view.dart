@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:url_manager/view_models/ai_settings_view_model.dart';
 import 'package:url_manager/view_models/storage_info_view_model.dart';
 import 'package:url_manager/views/ai_settings_view.dart';
+import 'package:url_manager/views/status_overview_view.dart';
 
 /// 設定画面のルートビュー。概要カードでAI設定とストレージ状況を可視化する。
 class SettingsRootView extends ConsumerWidget {
@@ -20,10 +21,6 @@ class SettingsRootView extends ConsumerWidget {
     final storageInfo = ref.watch(storageInfoProvider);
 
     final missingSettings = _extractMissingSettings(aiSettings);
-    final settingsCompletion =
-        1 - (missingSettings.length / _totalSettingKeys);
-    final normalizedSettingsCompletion =
-        settingsCompletion.clamp(0.0, 1.0).toDouble();
     final lastSyncedAt = storageInfo.lastSyncedAt;
     final formattedSync = lastSyncedAt == null
         ? '未同期'
@@ -49,7 +46,7 @@ class SettingsRootView extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                // 設定群のトップとしてステータス概要を表示するタイル。
+                // 設定群のトップとしてステータス概要画面への遷移を提供するタイル。
                 ListTile(
                   leading: const Icon(Icons.dashboard_outlined),
                   title: Text(
@@ -60,64 +57,22 @@ class SettingsRootView extends ConsumerWidget {
                     ),
                   ),
                   isThreeLine: true,
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // AI設定状況を説明するテキスト。
-                      Text(
-                        aiSettings.isConfigured
-                            ? 'AI設定は正常に構成されています。'
-                            : 'AI設定が未完了です: ${missingSettings.join(' / ')}',
-                        textScaler: textScaler,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 6),
-                      // 保存済みURL件数と最終同期日時の概要。
-                      Text(
-                        '保存済みURL: ${storageInfo.usedEntries}件 / 最終同期: $formattedSync',
-                        textScaler: textScaler,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      // 不足設定項目の進捗バーと説明。
-                      Text(
-                        '不足している設定項目',
-                        textScaler: textScaler,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: normalizedSettingsCompletion,
-                        minHeight: 6,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        missingSettings.isEmpty
-                            ? 'すべての必須項目が入力済みです。'
-                            : '${missingSettings.length}項目が未設定です。',
-                        textScaler: textScaler,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      // ストレージ使用率の進捗バーと説明。
-                      Text(
-                        'ストレージ使用率',
-                        textScaler: textScaler,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: storageInfo.usageRatio,
-                        minHeight: 6,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '約${(storageInfo.usageRatio * 100).clamp(0, 100).toStringAsFixed(0)}%（${storageInfo.usedEntries}/${storageInfo.capacityEntries}件）',
-                        textScaler: textScaler,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
+                  subtitle: Text(
+                    aiSettings.isConfigured
+                        ? 'AI設定は完了・保存URL ${storageInfo.usedEntries}件\n最終同期: $formattedSync'
+                        : 'AI設定未完了（${missingSettings.join(' / ')}）\n最終同期: $formattedSync',
+                    textScaler: textScaler,
+                    style: theme.textTheme.bodySmall,
                   ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    // 詳細なステータスを確認できる画面へ遷移する。
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StatusOverviewView(),
+                      ),
+                    );
+                  },
                 ),
                 const Divider(height: 1),
                 // AI設定関連の操作項目。
@@ -246,8 +201,6 @@ class SettingsRootView extends ConsumerWidget {
       ),
     );
   }
-
-  static const int _totalSettingKeys = 4;
 
   /// AI設定の未入力項目を抽出するヘルパー。
   List<String> _extractMissingSettings(AiSettings settings) {
