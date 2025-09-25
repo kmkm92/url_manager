@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
+/// URL の新規作成・更新を行うフォーム画面。
+///
+/// 事前に渡された [Url] がある場合は編集モードとして利用し、
+/// テキストフィールドや各種フラグの初期値へ反映する。
 class AddUrlFormView extends ConsumerStatefulWidget {
   final Url? url;
 
-  AddUrlFormView({this.url});
+  const AddUrlFormView({Key? key, this.url}) : super(key: key);
 
   @override
   _AddUrlFormViewState createState() => _AddUrlFormViewState();
@@ -53,148 +57,172 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   @override
   Widget build(BuildContext context) {
+    // テーマのカラースキームを取得し、ライト/ダーク双方で自然に見える配色へ合わせる。
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(30.0),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.check),
-              onPressed: _addOrUpdateUrl,
-            ),
-          ],
-        ),
-      ),
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.0),
-              topRight: Radius.circular(20.0),
-            ),
+      appBar: AppBar(
+        // 編集か新規追加かが一目で分かるタイトルを表示する。
+        title: Text(widget.url == null ? 'URLを追加' : 'URLを更新'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            tooltip: widget.url == null ? '保存して追加' : '保存して更新',
+            onPressed: _addOrUpdateUrl,
           ),
-          child: ListView(
-            children: [
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(1.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red),
+        ],
+      ),
+      body: SafeArea(
+        child: GestureDetector(
+          // フォーム外をタップしたらキーボードを閉じる。
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20.0),
+                topRight: Radius.circular(20.0),
+              ),
+              boxShadow: theme.brightness == Brightness.light
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, -2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: colorScheme.error),
+                    ),
+                  ),
+                // タイトル入力フィールド。
+                TextField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'タイトル',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+                const SizedBox(height: 16),
+                // URL 入力フィールド。複数行入力にも対応する。
+                TextField(
+                  controller: _urlController,
+                  minLines: 1,
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    labelText: 'URL',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // メモ入力欄。Markdown 対応で複数行を許容する。
+                TextField(
+                  controller: _noteController,
+                  minLines: 1,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: 'メモ (Markdown 可)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // タグ入力欄。サジェスト用途のヘルパーテキストを表示する。
+                TextField(
+                  controller: _tagsController,
+                  decoration: InputDecoration(
+                    labelText: 'タグ（カンマ区切り）',
+                    helperText: '例: Flutter, Drift, 要約',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // URL の状態を表すフラグ群。FilterChip で ON/OFF を切り替える。
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        floatingLabelStyle: TextStyle(
-                          color: Colors.black,
-                        ),
-                        labelText: 'タイトル',
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(),
-                        ),
-                      ),
+                    FilterChip(
+                      label: const Text('スター'),
+                      selected: _isStarred,
+                      onSelected: (value) {
+                        setState(() {
+                          _isStarred = value;
+                        });
+                      },
                     ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _urlController,
-                      minLines: 1,
-                      maxLines: null,
-                      decoration: InputDecoration(
-                        floatingLabelStyle: TextStyle(
-                          color: Colors.black,
-                        ),
-                        labelText: 'URL',
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(),
-                        ),
-                      ),
+                    FilterChip(
+                      label: const Text('既読'),
+                      selected: _isRead,
+                      onSelected: (value) {
+                        setState(() {
+                          _isRead = value;
+                        });
+                      },
                     ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _noteController,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'メモ (Markdown 可)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tagsController,
-                      decoration: const InputDecoration(
-                        labelText: 'タグ（カンマ区切り）',
-                        border: OutlineInputBorder(),
-                        helperText: '例: Flutter, Drift, 要約',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        FilterChip(
-                          label: const Text('スター'),
-                          selected: _isStarred,
-                          onSelected: (value) {
-                            setState(() {
-                              _isStarred = value;
-                            });
-                          },
-                        ),
-                        FilterChip(
-                          label: const Text('既読'),
-                          selected: _isRead,
-                          onSelected: (value) {
-                            setState(() {
-                              _isRead = value;
-                            });
-                          },
-                        ),
-                        FilterChip(
-                          label: const Text('アーカイブ'),
-                          selected: _isArchived,
-                          onSelected: (value) {
-                            setState(() {
-                              _isArchived = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _addOrUpdateUrl,
-                      child: Text(widget.url == null ? '追加' : '更新'),
-                      style: ElevatedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                      ),
+                    FilterChip(
+                      label: const Text('アーカイブ'),
+                      selected: _isArchived,
+                      onSelected: (value) {
+                        setState(() {
+                          _isArchived = value;
+                        });
+                      },
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                // フォーム全体を保存するアクションボタン。
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _addOrUpdateUrl,
+                    child: Text(widget.url == null ? '追加' : '更新'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  /// 入力値を検証し、URL の新規作成または更新を行う。
   Future<void> _addOrUpdateUrl() async {
     if (_urlController.text.isEmpty) {
       setState(() {
