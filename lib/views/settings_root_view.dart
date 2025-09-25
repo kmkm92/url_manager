@@ -33,90 +33,6 @@ class SettingsRootView extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
         children: [
-          // ステータス概要を表示するカード。
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // カードタイトル。
-                  Text(
-                    'ステータス概要',
-                    textScaler: textScaler,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // AI設定状況の説明テキスト。
-                  Text(
-                    aiSettings.isConfigured
-                        ? 'AI設定は正常に構成されています。'
-                        : 'AI設定が未完了です: ${missingSettings.join(' / ')}',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  // 保存済みURL件数の表示。
-                  Text(
-                    '保存済みURL: ${storageInfo.usedEntries}件',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  // 最終同期日時の表示。
-                  Text(
-                    '最終同期: $formattedSync',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  // 不足している設定項目の進捗バー。
-                  Text(
-                    '不足している設定項目',
-                    textScaler: textScaler,
-                    style: theme.textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: normalizedSettingsCompletion,
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    missingSettings.isEmpty
-                        ? 'すべての必須項目が入力済みです。'
-                        : '${missingSettings.length}項目が未設定です。',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 20),
-                  // ストレージ使用率の進捗バー。
-                  Text(
-                    'ストレージ使用率',
-                    textScaler: textScaler,
-                    style: theme.textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: storageInfo.usageRatio,
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '約${(storageInfo.usageRatio * 100).clamp(0, 100).toStringAsFixed(0)}%（${storageInfo.usedEntries}/${storageInfo.capacityEntries}件）',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
           // 設定セクションのタイトル。
           Text(
             '設定',
@@ -126,13 +42,85 @@ class SettingsRootView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // AI設定関連の操作カード。
+          // 設定項目のカード群。ステータス概要も一項目として含める。
           Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               children: [
+                // 設定群のトップとしてステータス概要を表示するタイル。
+                ListTile(
+                  leading: const Icon(Icons.dashboard_outlined),
+                  title: Text(
+                    'ステータス概要',
+                    textScaler: textScaler,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  isThreeLine: true,
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // AI設定状況を説明するテキスト。
+                      Text(
+                        aiSettings.isConfigured
+                            ? 'AI設定は正常に構成されています。'
+                            : 'AI設定が未完了です: ${missingSettings.join(' / ')}',
+                        textScaler: textScaler,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 6),
+                      // 保存済みURL件数と最終同期日時の概要。
+                      Text(
+                        '保存済みURL: ${storageInfo.usedEntries}件 / 最終同期: $formattedSync',
+                        textScaler: textScaler,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      // 不足設定項目の進捗バーと説明。
+                      Text(
+                        '不足している設定項目',
+                        textScaler: textScaler,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: normalizedSettingsCompletion,
+                        minHeight: 6,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        missingSettings.isEmpty
+                            ? 'すべての必須項目が入力済みです。'
+                            : '${missingSettings.length}項目が未設定です。',
+                        textScaler: textScaler,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      // ストレージ使用率の進捗バーと説明。
+                      Text(
+                        'ストレージ使用率',
+                        textScaler: textScaler,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: storageInfo.usageRatio,
+                        minHeight: 6,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '約${(storageInfo.usageRatio * 100).clamp(0, 100).toStringAsFixed(0)}%（${storageInfo.usedEntries}/${storageInfo.capacityEntries}件）',
+                        textScaler: textScaler,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                // AI設定関連の操作項目。
                 // AIサマリー設定画面へのナビゲーション。
                 ListTile(
                   leading: const Icon(Icons.auto_awesome),
