@@ -1,5 +1,6 @@
 // URL保存フォーム画面を描画し、入力内容の保存を担うウィジェット。
 
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,7 +58,6 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   @override
   Widget build(BuildContext context) {
-
     // 画面描画時に利用するテーマ色情報をまとめて取得しておく。
 
     // URLリストの監視を行い、既存タグ候補を抽出する
