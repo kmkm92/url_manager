@@ -1,8 +1,13 @@
+// URLの追加・編集フォームで利用する共通タグ候補や入力制御を実装する
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/database.dart';
+import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 
+// URLの追加・編集フォーム全体を提供するウィジェット
 class AddUrlFormView extends ConsumerStatefulWidget {
   final Url? url;
 
@@ -12,6 +17,7 @@ class AddUrlFormView extends ConsumerStatefulWidget {
   _AddUrlFormViewState createState() => _AddUrlFormViewState();
 }
 
+// フォーム画面のステート管理と入力ハンドリングを担当するStateクラス
 class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   final _titleController = TextEditingController();
   final _urlController = TextEditingController();
@@ -25,6 +31,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   @override
   void initState() {
     super.initState();
+    // 編集時は既存レコードの内容をフォームへ反映する
     if (widget.url != null) {
       _titleController.text = widget.url!.message;
       _urlController.text = widget.url!.url;
@@ -34,12 +41,16 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
       _isRead = widget.url!.isRead;
       _isArchived = widget.url!.isArchived;
     }
+    // URL入力欄の高さとタグチップの表示更新を監視する
     _urlController.addListener(_updateUrlFieldHeight);
+    _tagsController.addListener(_onTagsChanged);
   }
 
   @override
   void dispose() {
+    // リスナーを解放してメモリリークを防止する
     _urlController.removeListener(_updateUrlFieldHeight);
+    _tagsController.removeListener(_onTagsChanged);
     _titleController.dispose();
     _urlController.dispose();
     _noteController.dispose();
@@ -51,8 +62,52 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
     setState(() {});
   }
 
+  // タグ入力欄が変わった際にチップの選択状態を更新する
+  void _onTagsChanged() {
+    setState(() {});
+  }
+
+  // URL一覧から既存タグを取り出し、ソート済み集合として返却する
+  SplayTreeSet<String> _collectExistingTags(Iterable<Url> urls) {
+    final sortedTags = SplayTreeSet<String>();
+    for (final url in urls) {
+      sortedTags.addAll(parseTags(url.tags));
+    }
+    return sortedTags;
+  }
+
+  // 現在テキスト欄に入力されているタグをセットとして取得する
+  Set<String> _currentTagSelection() {
+    return parseTags(_tagsController.text).toSet();
+  }
+
+  // チップをタップした際にタグ文字列へ追加・削除を反映する
+  void _toggleTag(String tag) {
+    final sortedTagSet = SplayTreeSet<String>()
+      ..addAll(parseTags(_tagsController.text));
+
+    if (sortedTagSet.contains(tag)) {
+      sortedTagSet.remove(tag);
+    } else {
+      sortedTagSet.add(tag);
+    }
+
+    final updatedText = sortedTagSet.join(', ');
+    setState(() {
+      _tagsController.text = updatedText;
+      _tagsController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _tagsController.text.length),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    // RiverpodからURL一覧を取得し、タグ候補の生成に利用する
+    final urls = ref.watch(urlListProvider);
+    final sortedExistingTags = _collectExistingTags(urls);
+    final currentTagSet = _currentTagSelection();
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(30.0),
@@ -142,6 +197,25 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         helperText: '例: Flutter, Drift, 要約',
                       ),
                     ),
+                    if (sortedExistingTags.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        // 既存タグ候補をチップで一覧表示する
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final tag in sortedExistingTags)
+                              ChoiceChip(
+                                label: Text(tag),
+                                selected: currentTagSet.contains(tag),
+                                onSelected: (_) => _toggleTag(tag),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 12,
