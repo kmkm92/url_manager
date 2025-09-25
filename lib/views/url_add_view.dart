@@ -1,5 +1,6 @@
-import 'dart:collection';
+// URL保存フォーム画面を描画し、入力内容の保存を担うウィジェット。
 
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,12 +58,15 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
   @override
   Widget build(BuildContext context) {
+    // 画面描画時に利用するテーマ色情報をまとめて取得しておく。
+
     // URLリストの監視を行い、既存タグ候補を抽出する
     final urls = ref.watch(urlListProvider);
     final existingTags = SplayTreeSet<String>.from(
       urls.expand((url) => parseTags(url.tags)),
     );
     final currentTags = parseTags(_tagsController.text);
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -89,10 +93,14 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
         child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+            // シートの背景色もテーマカラーから取得し、ダークテーマでも違和感が出ないようにする。
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20.0),
               topRight: Radius.circular(20.0),
+            ),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.3),
             ),
           ),
           child: Form(
@@ -106,14 +114,21 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                       TextFormField(
                         controller: _titleController,
                         decoration: InputDecoration(
-                          floatingLabelStyle: TextStyle(
-                            color: Colors.black,
-                          ),
+                          // ラベル色や枠線色をテーマに追従させ、ライト/ダーク双方で読みやすくする。
+                          floatingLabelStyle:
+                              TextStyle(color: colorScheme.onSurface),
                           labelText: 'タイトル',
-                          border: OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colorScheme.outline),
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceVariant,
                         ),
                         validator: (value) {
                           if (value != null && value.length >= 100) {
@@ -133,14 +148,20 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         autocorrect: false,
                         enableSuggestions: false,
                         decoration: InputDecoration(
-                          floatingLabelStyle: TextStyle(
-                            color: Colors.black,
-                          ),
+                          floatingLabelStyle:
+                              TextStyle(color: colorScheme.onSurface),
                           labelText: 'URL',
-                          border: OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colorScheme.outline),
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceVariant,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -154,18 +175,38 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         controller: _noteController,
                         minLines: 1,
                         maxLines: 4,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'メモ (Markdown 可)',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colorScheme.outline),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _tagsController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'タグ（カンマ区切り）',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colorScheme.outline),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: colorScheme.primary, width: 2),
+                          ),
                           helperText: '例: Flutter, Drift, 要約',
+                          filled: true,
+                          fillColor: colorScheme.surfaceVariant,
                         ),
                       ),
                       if (existingTags.isNotEmpty) ...[
@@ -222,11 +263,13 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: _addOrUpdateUrl,
-                        child: Text(widget.url == null ? '追加' : '更新'),
                         style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               horizontal: 32, vertical: 12),
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
                         ),
+                        child: Text(widget.url == null ? '追加' : '更新'),
                       ),
                     ],
                   ),
@@ -240,6 +283,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
   }
 
   Future<void> _addOrUpdateUrl() async {
+    // フォーム入力を検証し、状態に応じてURLを新規保存または更新する。
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final newUrl = Url(
