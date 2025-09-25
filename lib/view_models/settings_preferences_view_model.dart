@@ -24,7 +24,7 @@ class SettingsPreferencesState {
   /// OSのDynamic Type（文字サイズ）設定を優先するかどうかのフラグ。
   final bool preferDynamicType;
 
-  /// アプリ全体でダークテーマを使用するかどうかのフラグ。
+  /// true の場合は常にダークテーマを使用し、false の場合はシステム設定に従うフラグ。
   final bool enableDarkTheme;
 
   /// アプリを起動した際に最初に開くタブを示す設定値。
