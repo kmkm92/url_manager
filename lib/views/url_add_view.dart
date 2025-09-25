@@ -198,8 +198,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         onPressed: _addOrUpdateUrl,
                         child: Text(widget.url == null ? '追加' : '更新'),
                         style: ElevatedButton.styleFrom(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
                         ),
                       ),
                     ],
