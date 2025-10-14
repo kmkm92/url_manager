@@ -5,14 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
-import 'package:url_manager/view_models/url_summary_view_model.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
-import 'package:url_manager/views/ai_settings_view.dart';
 import 'package:url_manager/views/history_view.dart';
 import 'package:url_manager/views/settings_root_view.dart';
 import 'package:url_manager/views/url_add_view.dart';
-import 'package:url_manager/views/url_summary_view.dart';
 import 'package:url_manager/views/widgets/url_detail_sheet.dart';
+// import 'package:url_manager/view_models/url_summary_view_model.dart';
+// import 'package:url_manager/views/ai_settings_view.dart';
+// import 'package:url_manager/views/url_summary_view.dart';
+// ↑ 初期リリースではAI要約機能を搭載しないため、関連する画面とViewModelの読み込みを一時的に無効化している。
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 final statusFilterProvider =
@@ -224,15 +225,16 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             snap: true,
             title: const Text('ライブラリ'),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.settings_input_component_outlined),
-                tooltip: 'AI設定',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AiSettingsView()),
-                  );
-                },
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.settings_input_component_outlined),
+              //   tooltip: 'AI設定',
+              //   onPressed: () {
+              //     Navigator.of(context).push(
+              //       MaterialPageRoute(builder: (_) => const AiSettingsView()),
+              //     );
+              //   },
+              // ),
+              // ↑ 先行リリースではAI設定画面へ遷移できないようにアクション自体をコメントアウトする。
             ],
           ),
           SliverToBoxAdapter(
@@ -561,18 +563,19 @@ class _UrlCard extends ConsumerWidget {
             onTap: () {
               _showDetailSheet(context, ref, url, onEdit);
             },
-            onLongPress: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => UrlSummary(
-                    summaryRequest: SummaryRequest(
-                      url: url.url,
-                      title: url.message,
-                    ),
-                  ),
-                ),
-              );
-            },
+            // onLongPress: () {
+            //   Navigator.of(context).push(
+            //     MaterialPageRoute(
+            //       builder: (_) => UrlSummary(
+            //         summaryRequest: SummaryRequest(
+            //           url: url.url,
+            //           title: url.message,
+            //         ),
+            //       ),
+            //     ),
+            //   );
+            // },
+            // ↑ 長押しからAI要約画面へ遷移する動線も初期バージョンでは無効化する。
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
