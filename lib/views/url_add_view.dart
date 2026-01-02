@@ -176,7 +176,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                         minLines: 1,
                         maxLines: 4,
                         decoration: InputDecoration(
-                          labelText: 'メモ (Markdown 可)',
+                          labelText: 'メモ',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: colorScheme.outline),

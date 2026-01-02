@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
 import 'package:url_manager/views/history_view.dart';
 import 'package:url_manager/views/settings_root_view.dart';
 import 'package:url_manager/views/url_add_view.dart';
+import 'package:url_manager/views/widgets/delete_confirm_dialog.dart';
 import 'package:url_manager/views/widgets/url_detail_sheet.dart';
 // import 'package:url_manager/view_models/url_summary_view_model.dart';
 // import 'package:url_manager/views/ai_settings_view.dart';
@@ -16,10 +18,81 @@ import 'package:url_manager/views/widgets/url_detail_sheet.dart';
 // ↑ 初期リリースではAI要約機能を搭載しないため、関連する画面とViewModelの読み込みを一時的に無効化している。
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
+
+// フィルター状態永続化用のキー
+const _statusFilterKey = 'filter_status_filters';
+const _tagFilterKey = 'filter_tag_filter';
+
+/// ステータスフィルターを永続化するNotifier
+class StatusFilterNotifier extends StateNotifier<Set<StatusFilter>> {
+  StatusFilterNotifier() : super(<StatusFilter>{}) {
+    _loadFromPrefs();
+  }
+
+  SharedPreferences? _prefs;
+
+  /// SharedPreferencesから保存済みフィルターを復元
+  Future<void> _loadFromPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    final savedList = _prefs?.getStringList(_statusFilterKey);
+    if (savedList != null && savedList.isNotEmpty) {
+      state = savedList
+          .map((name) => StatusFilter.values.firstWhere(
+                (f) => f.name == name,
+                orElse: () => StatusFilter.unread,
+              ))
+          .where((f) => StatusFilter.values.contains(f))
+          .toSet();
+    }
+  }
+
+  /// フィルターを更新し永続化
+  Future<void> update(Set<StatusFilter> newFilters) async {
+    state = newFilters;
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs?.setStringList(
+      _statusFilterKey,
+      newFilters.map((f) => f.name).toList(),
+    );
+  }
+}
+
+/// タグフィルターを永続化するNotifier
+class TagFilterNotifier extends StateNotifier<String?> {
+  TagFilterNotifier() : super(null) {
+    _loadFromPrefs();
+  }
+
+  SharedPreferences? _prefs;
+
+  /// SharedPreferencesから保存済みタグフィルターを復元
+  Future<void> _loadFromPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    final savedTag = _prefs?.getString(_tagFilterKey);
+    if (savedTag != null && savedTag.isNotEmpty) {
+      state = savedTag;
+    }
+  }
+
+  /// タグフィルターを更新し永続化
+  Future<void> update(String? newTag) async {
+    state = newTag;
+    _prefs ??= await SharedPreferences.getInstance();
+    if (newTag == null || newTag.isEmpty) {
+      await _prefs?.remove(_tagFilterKey);
+    } else {
+      await _prefs?.setString(_tagFilterKey, newTag);
+    }
+  }
+}
+
 final statusFilterProvider =
-    StateProvider<Set<StatusFilter>>((ref) => <StatusFilter>{});
-final domainFilterProvider = StateProvider<String?>((ref) => null);
-final tagFilterProvider = StateProvider<String?>((ref) => null);
+    StateNotifierProvider<StatusFilterNotifier, Set<StatusFilter>>(
+  (ref) => StatusFilterNotifier(),
+);
+final tagFilterProvider = StateNotifierProvider<TagFilterNotifier, String?>(
+  (ref) => TagFilterNotifier(),
+);
 
 enum StatusFilter { unread, starred, archived }
 
@@ -163,7 +236,6 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     final urls = ref.watch(urlListProvider);
     final searchQuery = ref.watch(searchQueryProvider);
     final statusFilters = ref.watch(statusFilterProvider);
-    final domainFilter = ref.watch(domainFilterProvider);
     final tagFilter = ref.watch(tagFilterProvider);
 
     final filteredUrls = urls.where((url) {
@@ -172,7 +244,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           url.message.toLowerCase().contains(searchQuery.toLowerCase()) ||
           url.url.toLowerCase().contains(searchQuery.toLowerCase()) ||
           url.details.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          tags.any((tag) => tag.toLowerCase().contains(searchQuery.toLowerCase()));
+          tags.any(
+              (tag) => tag.toLowerCase().contains(searchQuery.toLowerCase()));
 
       final matchesStatus = () {
         if (statusFilters.isEmpty) {
@@ -195,22 +268,13 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         });
       }();
 
-      final matchesDomain =
-          domainFilter == null || domainFilter.isEmpty || url.domain == domainFilter;
-
       final matchesTag = tagFilter == null ||
           tagFilter.isEmpty ||
           tags.any((tag) => tag.toLowerCase() == tagFilter.toLowerCase());
 
-      return matchesSearch && matchesStatus && matchesDomain && matchesTag;
+      return matchesSearch && matchesStatus && matchesTag;
     }).toList();
 
-    final uniqueDomains = urls
-        .map((url) => url.domain)
-        .where((domain) => domain.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
     final availableTags = urls
         .expand((url) => _extractTags(url.tags))
         .toSet()
@@ -246,7 +310,6 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           SliverToBoxAdapter(
             child: _FilterSection(
               statusFilters: statusFilters,
-              uniqueDomains: uniqueDomains,
               availableTags: availableTags,
             ),
           ),
@@ -276,7 +339,8 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 (context, index) {
                   final url = filteredUrls[index];
                   return Padding(
-                    padding: EdgeInsets.only(top: index == 0 ? 4 : 0, bottom: 12),
+                    padding:
+                        EdgeInsets.only(top: index == 0 ? 4 : 0, bottom: 12),
                     child: _UrlCard(
                       url: url,
                       onEdit: widget.onEdit,
@@ -322,72 +386,21 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 class _FilterSection extends ConsumerWidget {
   const _FilterSection({
     required this.statusFilters,
-    required this.uniqueDomains,
     required this.availableTags,
   });
 
   final Set<StatusFilter> statusFilters;
-  final List<String> uniqueDomains;
   final List<String> availableTags;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final domainFilter = ref.watch(domainFilterProvider);
     final tagFilter = ref.watch(tagFilterProvider);
-    final hasStatusFilter = statusFilters.isNotEmpty;
-    final hasDomainFilter = domainFilter != null && domainFilter.isNotEmpty;
-    final hasTagFilter = tagFilter != null && tagFilter.isNotEmpty;
-    final hasActiveFilter =
-        hasStatusFilter || hasDomainFilter || hasTagFilter;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (hasActiveFilter) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (hasStatusFilter)
-                        for (final filter in statusFilters)
-                          Chip(
-                            visualDensity: VisualDensity.compact,
-                            avatar: Icon(filter.icon, size: 16),
-                            label: Text(filter.label),
-                          ),
-                      if (hasDomainFilter)
-                        Chip(
-                          visualDensity: VisualDensity.compact,
-                          avatar: const Icon(Icons.language, size: 16),
-                          label: Text('ドメイン: $domainFilter'),
-                        ),
-                      if (hasTagFilter)
-                        Chip(
-                          visualDensity: VisualDensity.compact,
-                          avatar: const Icon(Icons.sell_outlined, size: 16),
-                          label: Text('タグ: $tagFilter'),
-                        ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    ref.read(statusFilterProvider.notifier).state = {};
-                    ref.read(domainFilterProvider.notifier).state = null;
-                    ref.read(tagFilterProvider.notifier).state = null;
-                  },
-                  child: const Text('フィルタをすべて解除'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -404,55 +417,13 @@ class _FilterSection extends ConsumerWidget {
                     } else {
                       current.remove(filter);
                     }
-                    ref.read(statusFilterProvider.notifier).state = current;
+                    ref.read(statusFilterProvider.notifier).update(current);
                   },
                 ),
-              if (statusFilters.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    ref.read(statusFilterProvider.notifier).state = {};
-                  },
-                  child: const Text('ステータスをクリア'),
-                ),
+              // 「ステータスをクリア」ボタンは「フィルタをすべて解除」に統合したため削除
             ],
           ),
           const SizedBox(height: 12),
-          if (uniqueDomains.isNotEmpty) ...[
-            const Text(
-              'ドメイン',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  ChoiceChip(
-                    label: const Text('すべて'),
-                    selected: domainFilter == null,
-                    onSelected: (value) {
-                      if (value) {
-                        ref.read(domainFilterProvider.notifier).state = null;
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  for (final domain in uniqueDomains) ...[
-                    ChoiceChip(
-                      label: Text(domain),
-                      selected: domainFilter == domain,
-                      onSelected: (value) {
-                        ref.read(domainFilterProvider.notifier).state =
-                            value ? domain : null;
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
           if (availableTags.isNotEmpty) ...[
             const Text(
               'タグ',
@@ -468,7 +439,7 @@ class _FilterSection extends ConsumerWidget {
                     selected: tagFilter == null,
                     onSelected: (value) {
                       if (value) {
-                        ref.read(tagFilterProvider.notifier).state = null;
+                        ref.read(tagFilterProvider.notifier).update(null);
                       }
                     },
                   ),
@@ -478,8 +449,9 @@ class _FilterSection extends ConsumerWidget {
                       label: Text(tag),
                       selected: tagFilter == tag,
                       onSelected: (value) {
-                        ref.read(tagFilterProvider.notifier).state =
-                            value ? tag : null;
+                        ref
+                            .read(tagFilterProvider.notifier)
+                            .update(value ? tag : null);
                       },
                     ),
                     const SizedBox(width: 8),
@@ -512,10 +484,10 @@ class _UrlCard extends ConsumerWidget {
       child: Dismissible(
         key: ValueKey('url-${url.id ?? url.url}'),
         background: _SwipeBackground(
-          color: theme.colorScheme.primaryContainer,
-          icon: Icons.star,
+          color: theme.colorScheme.tertiaryContainer,
+          icon: Icons.archive_outlined,
           alignment: Alignment.centerLeft,
-          label: 'スター',
+          label: 'アーカイブ',
         ),
         secondaryBackground: _SwipeBackground(
           color: theme.colorScheme.errorContainer,
@@ -525,30 +497,46 @@ class _UrlCard extends ConsumerWidget {
         ),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
-            await ref.read(urlListProvider.notifier).toggleStar(url);
+            await ref.read(urlListProvider.notifier).toggleArchive(url);
             HapticFeedback.mediumImpact();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(url.isStarred ? 'スターを解除しました' : 'スターに追加しました'),
+                content: Text(url.isArchived ? 'アーカイブを解除しました' : 'アーカイブしました'),
                 duration: const Duration(seconds: 1),
               ),
             );
             return false;
           }
           if (direction == DismissDirection.endToStart) {
+            // 削除確認ダイアログを表示。
+            final confirmed = await showDeleteConfirmDialog(
+              context: context,
+              ref: ref,
+              title: 'このURLを削除しますか？',
+              message: url.message.isEmpty ? url.url : url.message,
+            );
+            if (!confirmed) {
+              return false;
+            }
             await ref.read(urlListProvider.notifier).deleteUrl(url);
             HapticFeedback.heavyImpact();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('URLを削除しました'),
-                action: SnackBarAction(
-                  label: '元に戻す',
-                  onPressed: () {
-                    ref.read(urlListProvider.notifier).restoreDeleted();
-                  },
+            if (!context.mounted) return false;
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: const Text('URLを削除しました'),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  showCloseIcon: true,
+                  action: SnackBarAction(
+                    label: '元に戻す',
+                    onPressed: () {
+                      ref.read(urlListProvider.notifier).restoreDeleted();
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
             return false;
           }
           return false;
@@ -637,7 +625,9 @@ class _UrlCard extends ConsumerWidget {
                                   : theme.iconTheme.color,
                             ),
                             onPressed: () {
-                              ref.read(urlListProvider.notifier).toggleStar(url);
+                              ref
+                                  .read(urlListProvider.notifier)
+                                  .toggleStar(url);
                             },
                           ),
                           PopupMenuButton<_OverflowAction>(
@@ -674,8 +664,7 @@ class _UrlCard extends ConsumerWidget {
                                         ? Icons.mark_email_read
                                         : Icons.markunread,
                                   ),
-                                  title:
-                                      Text(url.isRead ? '未読に戻す' : '既読にする'),
+                                  title: Text(url.isRead ? '未読に戻す' : '既読にする'),
                                 ),
                               ),
                               PopupMenuItem(
@@ -903,7 +892,9 @@ class _Thumbnail extends StatelessWidget {
       child: imageUrl != null
           ? null
           : Text(
-              domain.isEmpty ? 'URL' : domain.characters.take(2).join().toUpperCase(),
+              domain.isEmpty
+                  ? 'URL'
+                  : domain.characters.take(2).join().toUpperCase(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -912,7 +903,14 @@ class _Thumbnail extends StatelessWidget {
   }
 }
 
-enum _OverflowAction { openExternal, copyLink, share, toggleRead, edit, toggleArchive }
+enum _OverflowAction {
+  openExternal,
+  copyLink,
+  share,
+  toggleRead,
+  edit,
+  toggleArchive
+}
 
 List<String> _extractTags(String raw) {
   return parseTags(raw);

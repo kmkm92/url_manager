@@ -29,8 +29,9 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
-  // 取得
-  Future<List<Url>> getAllUrls() => select(urls).get();
+  // 取得（最新順にソート）
+  Future<List<Url>> getAllUrls() =>
+      (select(urls)..orderBy([(t) => OrderingTerm.desc(t.savedAt)])).get();
   // 挿入
   Future<int> insertUrl(Url url) => into(urls).insert(url);
   // 更新

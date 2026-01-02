@@ -219,7 +219,7 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                 maxLines: 6,
                 minLines: 3,
                 decoration: const InputDecoration(
-                  hintText: '気づきやTODOをMarkdownでメモ',
+                  hintText: '気づきやTODOをメモ',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -359,7 +359,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
       ),
     );
   }
-
 }
 
 // class _SummaryBlock extends StatelessWidget {

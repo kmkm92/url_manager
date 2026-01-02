@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:url_manager/view_models/settings_preferences_view_model.dart';
-import 'package:url_manager/view_models/storage_info_view_model.dart';
 // import 'package:url_manager/view_models/ai_settings_view_model.dart';
 // import 'package:url_manager/views/ai_settings_view.dart';
 // import 'package:url_manager/views/status_overview_view.dart';
@@ -18,8 +16,7 @@ class SettingsRootView extends ConsumerWidget {
     final theme = Theme.of(context);
     final textScaler = MediaQuery.textScalerOf(context);
 
-    // Providerからストレージ情報と個人設定を取得。
-    final storageInfo = ref.watch(storageInfoProvider);
+    // Providerから個人設定を取得。
     final settingsPreferences =
         ref.watch(settingsPreferencesProvider); // 個人設定の現在値を取得。
 
@@ -29,11 +26,6 @@ class SettingsRootView extends ConsumerWidget {
         SnackBar(content: Text(message)),
       );
     }
-
-    final lastSyncedAt = storageInfo.lastSyncedAt;
-    final formattedSync = lastSyncedAt == null
-        ? '未同期'
-        : DateFormat.yMMMd('ja').add_Hm().format(lastSyncedAt.toLocal());
 
     return SafeArea(
       child: ListView(
@@ -55,23 +47,6 @@ class SettingsRootView extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                // 先行リリースではステータス概要カードをストレージの簡易情報のみ表示する。
-                ListTile(
-                  leading: const Icon(Icons.dashboard_outlined),
-                  title: Text(
-                    'ステータス概要',
-                    textScaler: textScaler,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  isThreeLine: true,
-                  subtitle: Text(
-                    '保存URL ${storageInfo.usedEntries}/${storageInfo.capacityEntries}件\n最終同期: $formattedSync',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
                 // const Divider(height: 1),
                 // ListTile(
                 //   leading: const Icon(Icons.auto_awesome),
@@ -120,31 +95,6 @@ class SettingsRootView extends ConsumerWidget {
                 //   ),
                 // ),
                 // ↑ AI要約に紐づく設定項目は将来復活させる想定でコメントアウトし、UIから隠している。
-                // Dynamic Type優先設定。メディアクエリとの整合を保つ。
-                SwitchListTile.adaptive(
-                  value: settingsPreferences.preferDynamicType,
-                  onChanged: (value) async {
-                    await ref
-                        .read(settingsPreferencesProvider.notifier)
-                        .updatePreferDynamicType(value);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    showSavedSnackBar('文字サイズ設定を保存しました');
-                  },
-                  title: Text(
-                    'Dynamic Typeを優先',
-                    textScaler: textScaler,
-                    style: theme.textTheme.titleSmall,
-                  ),
-                  subtitle: Text(
-                    settingsPreferences.preferDynamicType
-                        ? 'OSの文字サイズ設定に追従します'
-                        : 'アプリ独自のタイポグラフィを優先します',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
                 // ダークテーマの強制適用設定。デザインポリシーをユーザーに委ねる。
                 SwitchListTile.adaptive(
                   value: settingsPreferences.enableDarkTheme,
@@ -208,71 +158,65 @@ class SettingsRootView extends ConsumerWidget {
                         .toList(),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // その他設定項目のカード。
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                // 通知設定への誘導。
-                ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: Text(
-                    '通知',
-                    textScaler: textScaler,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  subtitle: Text(
-                    '朝のダイジェストと未読リマインダをカスタマイズ',
-                    textScaler: textScaler,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                ),
                 const Divider(height: 1),
-                // インポート/エクスポート設定への誘導。
-                ListTile(
-                  leading: const Icon(Icons.import_export),
+                // 削除確認ダイアログのスキップ設定。
+                SwitchListTile.adaptive(
+                  value: settingsPreferences.skipDeleteConfirm,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updateSkipDeleteConfirm(value);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showSavedSnackBar('削除確認設定を保存しました');
+                  },
                   title: Text(
-                    'インポート / エクスポート',
+                    '削除時に確認を表示しない',
                     textScaler: textScaler,
-                    style: theme.textTheme.titleMedium,
+                    style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    'BookmarksやCSVから取り込み、MD/JSONで書き出し',
+                    settingsPreferences.skipDeleteConfirm
+                        ? '確認なしで直接削除します'
+                        : '削除前に確認ダイアログを表示します',
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
-                  trailing: const Icon(Icons.chevron_right),
                 ),
-                const Divider(height: 1),
-                // プライバシー設定への誘導。
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
+                // 共有保存後のリダイレクト設定。
+                SwitchListTile.adaptive(
+                  value: settingsPreferences.shouldRedirectAfterShare,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updateRedirectAfterShare(value);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showSavedSnackBar('共有設定を保存しました');
+                  },
                   title: Text(
-                    'プライバシー',
+                    '保存後にアプリを開く',
                     textScaler: textScaler,
-                    style: theme.textTheme.titleMedium,
+                    style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    'ローカル保存と暗号化ポリシーを確認',
+                    settingsPreferences.shouldRedirectAfterShare
+                        ? '共有完了時に自動でアプリを開きます'
+                        : '共有完了後も元のアプリにとどまります',
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
-                  trailing: const Icon(Icons.chevron_right),
                 ),
               ],
             ),
           ),
+
           const SizedBox(height: 24),
           // バージョン情報。
           Text(
-            'バージョン 1.0.0\nローカル保存専用 - App Group対応',
+            'バージョン 1.0.0',
             textScaler: textScaler,
             style: theme.textTheme.bodySmall,
           ),

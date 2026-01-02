@@ -33,7 +33,13 @@ class HistoryView extends ConsumerWidget {
         itemCount: entries.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return _MetricsSection(metrics: metrics);
+            return _MetricsSection(
+              metrics: metrics,
+              urls: urls,
+              onMetricTap: (metric, filteredUrls) {
+                _showFilteredList(context, ref, metric, filteredUrls);
+              },
+            );
           }
           final entry = entries[index - 1];
           final formattedDate =
@@ -119,12 +125,153 @@ class HistoryView extends ConsumerWidget {
       },
     );
   }
+
+  /// メトリクスカードをタップしたときにフィルターされたリストを表示
+  void _showFilteredList(
+    BuildContext context,
+    WidgetRef ref,
+    _Metric metric,
+    List<Url> filteredUrls,
+  ) {
+    if (filteredUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${metric.title}に該当するアイテムがありません')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          maxChildSize: 0.95,
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          builder: (context, controller) {
+            final theme = Theme.of(context);
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // ハンドル
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  // タイトル
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor:
+                              metric.accentColor ?? theme.colorScheme.primary,
+                          child: Icon(
+                            metric.icon,
+                            size: 20,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                metric.title,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${filteredUrls.length} 件',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(color: theme.colorScheme.outline.withOpacity(0.2)),
+                  // リスト
+                  Expanded(
+                    child: ListView.separated(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: filteredUrls.length,
+                      separatorBuilder: (_, __) => Divider(
+                        color: theme.colorScheme.outline.withOpacity(0.1),
+                      ),
+                      itemBuilder: (context, index) {
+                        final url = filteredUrls[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            url.isRead
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: url.isRead
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline,
+                          ),
+                          title: Text(
+                            url.message.isEmpty ? url.url : url.message,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            '${url.domain.isEmpty ? '保存元不明' : url.domain} ・ ${DateFormat('yyyy/MM/dd HH:mm').format(url.savedAt)}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            _openDetail(context, ref, url);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _MetricsSection extends StatelessWidget {
-  const _MetricsSection({required this.metrics});
+  const _MetricsSection({
+    required this.metrics,
+    required this.urls,
+    required this.onMetricTap,
+  });
 
   final List<_Metric> metrics;
+  final List<Url> urls;
+  final void Function(_Metric metric, List<Url> filteredUrls) onMetricTap;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +284,15 @@ class _MetricsSection extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           itemBuilder: (context, index) {
             final metric = metrics[index];
-            return _MetricCard(metric: metric);
+            return _MetricCard(
+              metric: metric,
+              onTap: () {
+                if (metric.filter != null) {
+                  final filteredUrls = urls.where(metric.filter!).toList();
+                  onMetricTap(metric, filteredUrls);
+                }
+              },
+            );
           },
           separatorBuilder: (_, __) => const SizedBox(width: 12),
           itemCount: metrics.length,
@@ -148,74 +303,78 @@ class _MetricsSection extends StatelessWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.metric});
+  const _MetricCard({required this.metric, this.onTap});
 
   final _Metric metric;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: 240,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: metric.backgroundColor ??
-            theme.colorScheme.primary.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (metric.backgroundColor ??
-                  theme.colorScheme.primary.withOpacity(0.08))
-              .withOpacity(0.7),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor:
-                    metric.accentColor ?? theme.colorScheme.primary,
-                child: Icon(
-                  metric.icon,
-                  size: 18,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-              const Spacer(),
-              Flexible(
-                child: Text(
-                  metric.trendLabel,
-                  textAlign: TextAlign.end,
-                  style: theme.textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 240,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: metric.backgroundColor ??
+              theme.colorScheme.primary.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: (metric.backgroundColor ??
+                    theme.colorScheme.primary.withOpacity(0.08))
+                .withOpacity(0.7),
           ),
-          const SizedBox(height: 8),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              metric.value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                height: 1.1,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor:
+                      metric.accentColor ?? theme.colorScheme.primary,
+                  child: Icon(
+                    metric.icon,
+                    size: 18,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Flexible(
+                  child: Text(
+                    metric.trendLabel,
+                    textAlign: TextAlign.end,
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                metric.value,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  height: 1.1,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            metric.title,
-            style: theme.textTheme.bodyMedium,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 2),
+            Text(
+              metric.title,
+              style: theme.textTheme.bodyMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -229,6 +388,7 @@ class _Metric {
     this.trendLabel = '',
     this.backgroundColor,
     this.accentColor,
+    this.filter,
   });
 
   final String title;
@@ -237,16 +397,24 @@ class _Metric {
   final String trendLabel;
   final Color? backgroundColor;
   final Color? accentColor;
+
+  /// URLリストをフィルタリングする関数
+  final bool Function(Url)? filter;
 }
 
 List<_Metric> _buildMetrics(List<Url> urls) {
   final now = DateTime.now();
   final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-  final savedThisWeek =
-      urls.where((url) => url.savedAt.isAfter(startOfWeek)).length;
-  final unreadCount =
-      urls.where((url) => !url.isRead && !url.isArchived).length;
+  final thisWeekFilter = (Url url) => url.savedAt.isAfter(startOfWeek);
+  final savedThisWeek = urls.where(thisWeekFilter).length;
+  final unreadFilter = (Url url) => !url.isRead && !url.isArchived;
+  final unreadCount = urls.where(unreadFilter).length;
   final groupedByUrl = groupBy(urls, (Url url) => url.url);
+  final duplicateUrls = groupedByUrl.entries
+      .where((e) => e.value.length > 1)
+      .map((e) => e.key)
+      .toSet();
+  final duplicateFilter = (Url url) => duplicateUrls.contains(url.url);
   final duplicateCount =
       groupedByUrl.values.where((group) => group.length > 1).length;
 
@@ -256,6 +424,7 @@ List<_Metric> _buildMetrics(List<Url> urls) {
       value: '$savedThisWeek 件',
       icon: Icons.trending_up,
       trendLabel: savedThisWeek >= 5 ? 'ペース良好' : '習慣化を継続',
+      filter: thisWeekFilter,
     ),
     _Metric(
       title: '未読のアイテム',
@@ -264,6 +433,7 @@ List<_Metric> _buildMetrics(List<Url> urls) {
       trendLabel: unreadCount == 0 ? 'すべて消化済み' : '優先度順に整理',
       backgroundColor: Colors.lightBlue.withOpacity(0.15),
       accentColor: Colors.lightBlue,
+      filter: unreadFilter,
     ),
     _Metric(
       title: '重複候補',
@@ -272,6 +442,7 @@ List<_Metric> _buildMetrics(List<Url> urls) {
       trendLabel: duplicateCount == 0 ? 'クリーン' : 'マージを検討',
       backgroundColor: Colors.teal.withOpacity(0.12),
       accentColor: Colors.teal,
+      filter: duplicateFilter,
     ),
   ];
 }
