@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
@@ -136,13 +136,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                     },
                     icon: const Icon(Icons.open_in_browser),
                     label: const Text('ブラウザで開く'),
-                  ),
-                  FilledButton.tonalIcon(
-                    onPressed: () {
-                      Share.share(latest.url, subject: latest.message);
-                    },
-                    icon: const Icon(Icons.share_outlined),
-                    label: const Text('共有'),
                   ),
                   FilledButton.tonalIcon(
                     onPressed: () {
