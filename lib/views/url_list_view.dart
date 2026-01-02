@@ -12,10 +12,6 @@ import 'package:url_manager/views/settings_root_view.dart';
 import 'package:url_manager/views/url_add_view.dart';
 import 'package:url_manager/views/widgets/delete_confirm_dialog.dart';
 import 'package:url_manager/views/widgets/url_detail_sheet.dart';
-// import 'package:url_manager/view_models/url_summary_view_model.dart';
-// import 'package:url_manager/views/ai_settings_view.dart';
-// import 'package:url_manager/views/url_summary_view.dart';
-// ↑ 初期リリースではAI要約機能を搭載しないため、関連する画面とViewModelの読み込みを一時的に無効化している。
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -288,18 +284,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             floating: true,
             snap: true,
             title: const Text('ライブラリ'),
-            actions: [
-              // IconButton(
-              //   icon: const Icon(Icons.settings_input_component_outlined),
-              //   tooltip: 'AI設定',
-              //   onPressed: () {
-              //     Navigator.of(context).push(
-              //       MaterialPageRoute(builder: (_) => const AiSettingsView()),
-              //     );
-              //   },
-              // ),
-              // ↑ 先行リリースではAI設定画面へ遷移できないようにアクション自体をコメントアウトする。
-            ],
+            actions: const [],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -551,19 +536,6 @@ class _UrlCard extends ConsumerWidget {
             onTap: () {
               _showDetailSheet(context, ref, url, onEdit);
             },
-            // onLongPress: () {
-            //   Navigator.of(context).push(
-            //     MaterialPageRoute(
-            //       builder: (_) => UrlSummary(
-            //         summaryRequest: SummaryRequest(
-            //           url: url.url,
-            //           title: url.message,
-            //         ),
-            //       ),
-            //     ),
-            //   );
-            // },
-            // ↑ 長押しからAI要約画面へ遷移する動線も初期バージョンでは無効化する。
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -727,7 +699,7 @@ class _UrlCard extends ConsumerWidget {
                         onPressed: () {
                           ref
                               .read(urlListProvider.notifier)
-                              .opemUrl(context, url);
+                              .openUrl(context, url);
                         },
                         icon: const Icon(Icons.open_in_browser),
                         label: const Text('開く'),
@@ -751,7 +723,7 @@ class _UrlCard extends ConsumerWidget {
   ) {
     switch (action) {
       case _OverflowAction.openExternal:
-        ref.read(urlListProvider.notifier).opemUrl(context, url);
+        ref.read(urlListProvider.notifier).openUrl(context, url);
         break;
       case _OverflowAction.copyLink:
         Clipboard.setData(ClipboardData(text: url.url));
@@ -851,7 +823,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -879,7 +851,7 @@ class _Thumbnail extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         image: imageUrl == null
             ? null

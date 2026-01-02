@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_markdown/flutter_markdown.dart';
-// ↑ Markdown描画もAI要約の表示専用だったため、機能停止に合わせて読み込みを止めている。
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
 import 'package:url_manager/view_models/url_view_model.dart';
-// import 'package:url_manager/view_models/url_summary_view_model.dart';
-// import 'package:url_manager/views/url_summary_view.dart';
-// ↑ AI要約を初期バージョンでは提供しないため、要約用のProviderと画面遷移をまとめてコメントアウトする。
 
 class UrlDetailSheet extends ConsumerStatefulWidget {
   const UrlDetailSheet({
@@ -43,13 +38,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
     _isStarred = widget.url.isStarred;
     _isRead = widget.url.isRead;
     _isArchived = widget.url.isArchived;
-
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   ref.read(summaryCacheProvider.notifier).loadSummary(
-    //         SummaryRequest(url: widget.url.url, title: widget.url.message),
-    //       );
-    // });
-    // ↑ 詳細シート表示時にAI要約を自動取得する処理も公開版では停止させる。
   }
 
   @override
@@ -67,13 +55,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
       (item) => item.id == widget.url.id,
       orElse: () => widget.url,
     );
-    // final summaryRequest =
-    //     SummaryRequest(url: latest.url, title: latest.message);
-    // final summaryAsync = ref.watch(summaryCacheProvider.select((cache) {
-    //       return cache[summaryRequest];
-    //     })) ??
-    //     const AsyncValue<String>.loading();
-    // ↑ 要約関連の状態取得も無効化し、後続のUIから参照されないようコメントアウトする。
     final duplicates = urls
         .where((candidate) =>
             candidate.id != latest.id &&
@@ -151,25 +132,11 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                     onPressed: () {
                       ref
                           .read(urlListProvider.notifier)
-                          .opemUrl(context, latest);
+                          .openUrl(context, latest);
                     },
                     icon: const Icon(Icons.open_in_browser),
                     label: const Text('ブラウザで開く'),
                   ),
-                  // FilledButton.tonalIcon(
-                  //   onPressed: () {
-                  //     Navigator.of(context).push(
-                  //       MaterialPageRoute(
-                  //         builder: (_) => UrlSummary(
-                  //           summaryRequest: summaryRequest,
-                  //         ),
-                  //       ),
-                  //     );
-                  //   },
-                  //   icon: const Icon(Icons.auto_awesome),
-                  //   label: const Text('全文サマリー'),
-                  // ),
-                  // ↑ AI要約画面への導線ボタンをコメントアウトし、ユーザーがアクセスできないようにする。
                   FilledButton.tonalIcon(
                     onPressed: () {
                       Share.share(latest.url, subject: latest.message);
@@ -190,23 +157,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Text(
-              //   'AIサマリー',
-              //   style: theme.textTheme.titleMedium?.copyWith(
-              //     fontWeight: FontWeight.w600,
-              //   ),
-              // ),
-              // const SizedBox(height: 8),
-              // _SummaryBlock(
-              //   summaryAsync: summaryAsync,
-              //   onRetry: () {
-              //     ref
-              //         .read(summaryCacheProvider.notifier)
-              //         .loadSummary(summaryRequest, forceRefresh: true);
-              //   },
-              // ),
-              // const SizedBox(height: 24),
-              // ↑ 要約結果表示エリアも非表示にし、AI機能が存在しないことをUI上で明示する。
               Text(
                 'メモ',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -360,66 +310,3 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
     );
   }
 }
-
-// class _SummaryBlock extends StatelessWidget {
-//   const _SummaryBlock({required this.summaryAsync, required this.onRetry});
-//
-//   final AsyncValue<String> summaryAsync;
-//   final VoidCallback onRetry;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return summaryAsync.when(
-//       data: (summary) {
-//         if (summary.trim().isEmpty) {
-//           return const Text('要約はまだ生成されていません。');
-//         }
-//         return Container(
-//           padding: const EdgeInsets.all(16),
-//           decoration: BoxDecoration(
-//             color: Theme.of(context).colorScheme.surfaceVariant,
-//             borderRadius: BorderRadius.circular(16),
-//           ),
-//           child: MarkdownBody(
-//             data: summary,
-//             styleSheet:
-//                 MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-//               p: Theme.of(context).textTheme.bodyMedium,
-//             ),
-//           ),
-//         );
-//       },
-//       error: (error, _) {
-//         return Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(
-//               '要約を取得できませんでした。',
-//               style: Theme.of(context)
-//                   .textTheme
-//                   .bodyMedium
-//                   ?.copyWith(color: Theme.of(context).colorScheme.error),
-//             ),
-//             Text(error.toString()),
-//             const SizedBox(height: 8),
-//             TextButton.icon(
-//               onPressed: onRetry,
-//               icon: const Icon(Icons.refresh),
-//               label: const Text('再試行'),
-//             ),
-//           ],
-//         );
-//       },
-//       loading: () => Container(
-//         padding: const EdgeInsets.all(24),
-//         alignment: Alignment.center,
-//         decoration: BoxDecoration(
-//           color: Theme.of(context).colorScheme.surfaceVariant,
-//           borderRadius: BorderRadius.circular(16),
-//         ),
-//         child: const CircularProgressIndicator(),
-//       ),
-//     );
-//   }
-// }
-// ↑ 要約表示用のウィジェットも利用しないため丸ごとコメントアウトして保持しておく。

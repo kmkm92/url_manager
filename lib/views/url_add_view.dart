@@ -100,7 +100,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
               topRight: Radius.circular(20.0),
             ),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.3),
+              color: colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: Form(
@@ -128,7 +128,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                                 color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
-                          fillColor: colorScheme.surfaceVariant,
+                          fillColor: colorScheme.surfaceContainerHighest,
                         ),
                         validator: (value) {
                           if (value != null && value.length >= 100) {
@@ -161,7 +161,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                                 color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
-                          fillColor: colorScheme.surfaceVariant,
+                          fillColor: colorScheme.surfaceContainerHighest,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -187,7 +187,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                                 color: colorScheme.primary, width: 2),
                           ),
                           filled: true,
-                          fillColor: colorScheme.surfaceVariant,
+                          fillColor: colorScheme.surfaceContainerHighest,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -206,7 +206,7 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                           ),
                           helperText: '例: Flutter, Drift, 要約',
                           filled: true,
-                          fillColor: colorScheme.surfaceVariant,
+                          fillColor: colorScheme.surfaceContainerHighest,
                         ),
                       ),
                       if (existingTags.isNotEmpty) ...[

@@ -168,7 +168,7 @@ class HistoryView extends ConsumerWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.outline.withOpacity(0.4),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -210,7 +210,8 @@ class HistoryView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Divider(color: theme.colorScheme.outline.withOpacity(0.2)),
+                  Divider(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2)),
                   // リスト
                   Expanded(
                     child: ListView.separated(
@@ -221,7 +222,7 @@ class HistoryView extends ConsumerWidget {
                       ),
                       itemCount: filteredUrls.length,
                       separatorBuilder: (_, __) => Divider(
-                        color: theme.colorScheme.outline.withOpacity(0.1),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
                       ),
                       itemBuilder: (context, index) {
                         final url = filteredUrls[index];
@@ -318,12 +319,12 @@ class _MetricCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: metric.backgroundColor ??
-              theme.colorScheme.primary.withOpacity(0.08),
+              theme.colorScheme.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: (metric.backgroundColor ??
-                    theme.colorScheme.primary.withOpacity(0.08))
-                .withOpacity(0.7),
+                    theme.colorScheme.primary.withValues(alpha: 0.08))
+                .withValues(alpha: 0.7),
           ),
         ),
         child: Column(
@@ -431,7 +432,7 @@ List<_Metric> _buildMetrics(List<Url> urls) {
       value: '$unreadCount 件',
       icon: Icons.markunread_outlined,
       trendLabel: unreadCount == 0 ? 'すべて消化済み' : '優先度順に整理',
-      backgroundColor: Colors.lightBlue.withOpacity(0.15),
+      backgroundColor: Colors.lightBlue.withValues(alpha: 0.15),
       accentColor: Colors.lightBlue,
       filter: unreadFilter,
     ),
@@ -440,7 +441,7 @@ List<_Metric> _buildMetrics(List<Url> urls) {
       value: '$duplicateCount 件',
       icon: Icons.link_off_outlined,
       trendLabel: duplicateCount == 0 ? 'クリーン' : 'マージを検討',
-      backgroundColor: Colors.teal.withOpacity(0.12),
+      backgroundColor: Colors.teal.withValues(alpha: 0.12),
       accentColor: Colors.teal,
       filter: duplicateFilter,
     ),

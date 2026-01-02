@@ -50,23 +50,17 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
 
   // コンストラクタで共有インテントの監視と初期データの読み込みを開始
   UrlListNotifier(this._ref) : super([]) {
-    print('[UrlListNotifier] Initializing...');
-
     // getMediaStream(): アプリ起動中に共有を受け取るストリーム
     _intentSub = _eventChannel.receiveBroadcastStream().listen(
       (dynamic value) {
-        print('[UrlListNotifier] Stream received: $value');
         if (value is List) {
           _sharedFiles.clear();
           for (final item in value) {
-            print('[UrlListNotifier] Processing item: $item');
             if (item is Map) {
               _sharedFiles.add(SharedMediaFile.fromMap(item));
             }
           }
           if (_sharedFiles.isNotEmpty) {
-            print(
-                '[UrlListNotifier] Adding URL from stream: ${_sharedFiles.first.path}');
             addUrlFromShare(
               message: _sharedFiles.first.message,
               url: _sharedFiles.first.path,
@@ -77,18 +71,15 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
         }
       },
       onError: (err) {
-        print("[UrlListNotifier] getMediaStream error: $err");
+        // エラーは無視して継続
       },
     );
 
     // getInitialMedia(): アプリ起動時の初期共有データを取得
     _getInitialMedia().then((List<SharedMediaFile> value) {
-      print('[UrlListNotifier] getInitialMedia returned ${value.length} items');
       _sharedFiles.clear();
       _sharedFiles.addAll(value);
       if (_sharedFiles.isNotEmpty) {
-        print(
-            '[UrlListNotifier] Adding URL from initial: ${_sharedFiles.first.path}');
         addUrlFromShare(
           message: _sharedFiles.first.message,
           url: _sharedFiles.first.path,
@@ -104,18 +95,15 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   /// 初期共有データを取得（receive_sharing_intent.getInitialMedia() と同等）
   Future<List<SharedMediaFile>> _getInitialMedia() async {
     try {
-      print('[UrlListNotifier] Calling getInitialMedia...');
       final result =
           await _methodChannel.invokeMethod<List<dynamic>>('getInitialMedia');
-      print('[UrlListNotifier] getInitialMedia raw result: $result');
       if (result == null) return [];
 
       return result
           .whereType<Map>()
           .map((item) => SharedMediaFile.fromMap(item))
           .toList();
-    } on PlatformException catch (e) {
-      print('[UrlListNotifier] Failed to get initial media: ${e.message}');
+    } on PlatformException {
       return [];
     }
   }
@@ -123,10 +111,9 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   /// 共有データをリセット（receive_sharing_intent.reset() と同等）
   Future<void> _resetSharedData() async {
     try {
-      print('[UrlListNotifier] Calling reset...');
       await _methodChannel.invokeMethod('reset');
-    } on PlatformException catch (e) {
-      print('[UrlListNotifier] Failed to reset shared data: ${e.message}');
+    } on PlatformException {
+      // リセット失敗は無視
     }
   }
 
@@ -180,7 +167,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   }
 
   // URLを外部ブラウザで開き、既読状態の更新を行う
-  Future<void> opemUrl(BuildContext context, Url target) async {
+  Future<void> openUrl(BuildContext context, Url target) async {
     final uri = Uri.tryParse(target.url);
     if (uri == null) {
       return;

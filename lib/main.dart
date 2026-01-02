@@ -52,7 +52,7 @@ class MyApp extends ConsumerWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: lightScheme.surfaceVariant.withOpacity(0.4),
+          fillColor: lightScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -80,7 +80,7 @@ class MyApp extends ConsumerWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: darkScheme.surfaceVariant.withOpacity(0.4),
+          fillColor: darkScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
