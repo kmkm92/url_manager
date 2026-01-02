@@ -144,6 +144,13 @@ import Flutter
             NSLog("[AppDelegate] Sending \(items.count) items to stream from URL open")
             eventSink?(items)
         }
+        
+        // urlmanagerスキームの場合はFlutterのデフォルト処理（ルートプッシュ）を行わず、
+        // アプリをフォアグラウンドにするだけにするために true を返し super を呼ばない
+        if url.scheme == "urlmanager" {
+            return true
+        }
+        
         return super.application(app, open: url, options: options)
     }
 }

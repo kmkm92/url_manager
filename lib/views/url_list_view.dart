@@ -123,8 +123,6 @@ class UrlListView extends ConsumerStatefulWidget {
 }
 
 class _UrlListViewState extends ConsumerState<UrlListView> {
-  int _currentIndex = 0;
-
   void _showAddUrlForm([Url? url]) {
     showModalBottomSheet(
       context: context,
@@ -145,10 +143,13 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 現在のタブインデックスをProviderから監視
+    final currentIndex = ref.watch(homeTabIndexProvider);
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: [
           HomeTab(
             onEdit: _showAddUrlForm,
@@ -161,7 +162,7 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
           const SettingsRootView(),
         ],
       ),
-      floatingActionButton: _currentIndex == 0
+      floatingActionButton: currentIndex == 0
           ? FloatingActionButton.extended(
               onPressed: _showAddUrlForm,
               icon: const Icon(Icons.add),
@@ -169,11 +170,10 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
+        currentIndex: currentIndex,
         onTap: (value) {
-          setState(() {
-            _currentIndex = value;
-          });
+          // タブ切り替え時にProviderを更新
+          ref.read(homeTabIndexProvider.notifier).state = value;
         },
         items: const [
           BottomNavigationBarItem(

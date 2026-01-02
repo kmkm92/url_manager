@@ -13,6 +13,8 @@ final urlListProvider =
   return UrlListNotifier(ref);
 });
 
+final homeTabIndexProvider = StateProvider<int>((ref) => 0);
+
 /// 共有メディアファイルのデータクラス（receive_sharing_intent の SharedMediaFile と同等）
 class SharedMediaFile {
   final String path;
@@ -138,6 +140,9 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     String? url,
     String? sharedText,
   }) async {
+    // ホーム（ライブラリ）タブに切り替え
+    _ref.read(homeTabIndexProvider.notifier).state = 0;
+
     final normalizedMessage = _normalizeSharedText(message);
     final normalizedSharedText = _normalizeSharedText(sharedText);
     final extractedUrl = _extractValidUrl(url) ??
