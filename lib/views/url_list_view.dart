@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
@@ -621,13 +620,6 @@ class _UrlCard extends ConsumerWidget {
                                   title: Text('リンクをコピー'),
                                 ),
                               ),
-                              const PopupMenuItem(
-                                value: _OverflowAction.share,
-                                child: ListTile(
-                                  leading: Icon(Icons.share_outlined),
-                                  title: Text('共有'),
-                                ),
-                              ),
                               PopupMenuItem(
                                 value: _OverflowAction.toggleRead,
                                 child: ListTile(
@@ -731,9 +723,7 @@ class _UrlCard extends ConsumerWidget {
           const SnackBar(content: Text('リンクをコピーしました')),
         );
         break;
-      case _OverflowAction.share:
-        Share.share(url.url, subject: url.message);
-        break;
+
       case _OverflowAction.toggleRead:
         ref.read(urlListProvider.notifier).toggleRead(url);
         break;
@@ -878,7 +868,7 @@ class _Thumbnail extends StatelessWidget {
 enum _OverflowAction {
   openExternal,
   copyLink,
-  share,
+
   toggleRead,
   edit,
   toggleArchive
