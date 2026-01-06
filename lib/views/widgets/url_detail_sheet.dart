@@ -90,6 +90,25 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                   ),
                 ),
               ),
+              if (latest.ogImageUrl != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Hero(
+                    tag: 'url-image-${latest.id}',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        latest.ogImageUrl!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const SizedBox.shrink(); // エラー時は表示しない
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               Text(
                 latest.domain.isEmpty ? '保存元不明' : latest.domain,
                 style: theme.textTheme.bodyMedium?.copyWith(

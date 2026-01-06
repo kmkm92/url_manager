@@ -96,8 +96,8 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
             // シートの背景色もテーマカラーから取得し、ダークテーマでも違和感が出ないようにする。
             color: colorScheme.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20.0),
-              topRight: Radius.circular(20.0),
+              topLeft: Radius.circular(28.0),
+              topRight: Radius.circular(28.0),
             ),
             border: Border.all(
               color: colorScheme.outline.withValues(alpha: 0.3),

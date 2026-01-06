@@ -25,72 +25,143 @@ class MyApp extends ConsumerWidget {
     // 設定ViewModelからダークテーマ設定を購読し、テーマモードを即時反映させる。
     final settings = ref.watch(settingsPreferencesProvider);
 
+    // プレミアムな印象を与えるディープブルー/インディゴをシードカラーに採用
+    const seedColor = Color(0xFF2962FF); // Blue Accent 700
+
     final lightScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1A73E8),
+      seedColor: seedColor,
       brightness: Brightness.light,
+      surface: const Color(0xFFF5F7FA), // ほんのりグレーがかった白で目に優しく
     );
+
     final darkScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1A73E8),
+      seedColor: seedColor,
       brightness: Brightness.dark,
+      surface: const Color(0xFF121212), // 真っ黒ではなく、深みのあるダークグレー
+      surfaceContainer: const Color(0xFF1E1E1E),
     );
 
     return MaterialApp(
       title: 'URL Manager',
       debugShowCheckedModeBanner: false,
-      // 明るいテーマの定義。ライトモードで利用する。
+      // 明るいテーマの定義
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: lightScheme,
         scaffoldBackgroundColor: lightScheme.surface,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: false,
+          backgroundColor: lightScheme.surface,
+          surfaceTintColor: Colors.transparent, // スクロール時の色変化を抑制
+          titleTextStyle: TextStyle(
+            color: lightScheme.onSurface,
+            fontSize: 24,
+            fontWeight: FontWeight.w700, //太字でモダンに
+            letterSpacing: -0.5,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: lightScheme.outline.withOpacity(0.12),
+              width: 1,
+            ),
+          ),
         ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: lightScheme.inverseSurface,
-          contentTextStyle: TextStyle(color: lightScheme.onInverseSurface),
+          backgroundColor: const Color(0xFF323232),
+          contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: lightScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: lightScheme.outline.withOpacity(0.2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+                color: lightScheme.outline.withOpacity(0.1), width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: lightScheme.primary, width: 2),
           ),
         ),
         chipTheme: ChipThemeData(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
-          side: BorderSide(color: lightScheme.outlineVariant),
+          side: BorderSide.none,
+          backgroundColor: lightScheme.surfaceContainerHighest.withOpacity(0.3),
         ),
       ),
-      // ダークテーマの定義。ユーザーが強制ダークをONにした場合に利用する。
+      // ダークテーマの定義
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: darkScheme,
         scaffoldBackgroundColor: darkScheme.surface,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: false,
+          backgroundColor: darkScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          titleTextStyle: TextStyle(
+            color: darkScheme.onSurface,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          color: darkScheme.surfaceContainer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.white.withOpacity(0.05),
+              width: 1,
+            ),
+          ),
         ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: darkScheme.inverseSurface,
-          contentTextStyle: TextStyle(color: darkScheme.onInverseSurface),
+          backgroundColor: const Color(0xFFE0E0E0),
+          contentTextStyle:
+              const TextStyle(color: Colors.black87, fontSize: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: darkScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          fillColor: darkScheme.surfaceContainerHighest.withOpacity(0.2),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: darkScheme.primary, width: 2),
+          ),
         ),
         chipTheme: ChipThemeData(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
-          side: BorderSide(color: darkScheme.outlineVariant),
+          side: BorderSide.none,
+          backgroundColor: darkScheme.surfaceContainerHighest.withOpacity(0.3),
         ),
       ),
       // ダークテーマ設定に応じてテーマモードを切り替える。

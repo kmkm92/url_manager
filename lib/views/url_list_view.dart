@@ -169,26 +169,25 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
               label: const Text('保存'),
             )
           : null,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (value) {
-          // タブ切り替え時にProviderを更新
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (value) {
           ref.read(homeTabIndexProvider.notifier).state = value;
         },
-        items: const [
-          BottomNavigationBarItem(
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
+            selectedIcon: Icon(Icons.home),
             label: 'ホーム',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
+            selectedIcon: Icon(Icons.history),
             label: '履歴',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
+            selectedIcon: Icon(Icons.settings),
             label: '設定',
           ),
         ],
@@ -279,33 +278,41 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     return SafeArea(
       child: CustomScrollView(
         slivers: [
+          // ライブラリタイトル・検索・フィルターを統合したFloating Header
           SliverAppBar(
             floating: true,
             snap: true,
-            title: const Text('ライブラリ'),
-            actions: const [],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: _buildSearchField(context),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: _FilterSection(
-              statusFilters: statusFilters,
-              availableTags: availableTags,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '検索結果: ${filteredUrls.length} / ${urls.length} 件',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+            pinned: false,
+            automaticallyImplyLeading: false,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 210,
+            titleSpacing: 0,
+            title: Padding(
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 16, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'ライブラリ',
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSearchField(context),
+                  const SizedBox(height: 12),
+                  _FilterSection(
+                    statusFilters: statusFilters,
+                    availableTags: availableTags,
+                  ),
+                ],
               ),
             ),
           ),
@@ -324,7 +331,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                   final url = filteredUrls[index];
                   return Padding(
                     padding:
-                        EdgeInsets.only(top: index == 0 ? 4 : 0, bottom: 12),
+                        EdgeInsets.only(top: index == 0 ? 0 : 0, bottom: 12),
                     child: _UrlCard(
                       url: url,
                       onEdit: widget.onEdit,
@@ -346,21 +353,29 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     return TextField(
       controller: _searchController,
       decoration: InputDecoration(
-        hintText: 'URL・タイトル・メモを検索',
-        prefixIcon: const Icon(Icons.search),
+        hintText: '検索...',
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        prefixIcon: const Icon(Icons.search, size: 20),
         suffixIcon: _searchController.text.isEmpty
             ? null
             : IconButton(
-                icon: const Icon(Icons.clear),
+                icon: const Icon(Icons.clear, size: 20),
                 onPressed: () {
                   _searchController.clear();
                   ref.read(searchQueryProvider.notifier).state = '';
                 },
               ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
         filled: true,
+        fillColor: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.4),
       ),
       textInputAction: TextInputAction.search,
     );
@@ -380,73 +395,136 @@ class _FilterSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tagFilter = ref.watch(tagFilterProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final filter in StatusFilter.values)
-                FilterChip(
-                  label: Text(filter.label),
-                  avatar: Icon(filter.icon, size: 18),
-                  selected: statusFilters.contains(filter),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final filter in StatusFilter.values)
+              FilterChip(
+                label: Text(filter.label),
+                selected: statusFilters.contains(filter),
+                showCheckmark: false,
+                avatar: statusFilters.contains(filter)
+                    ? null
+                    : Icon(filter.icon,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                labelStyle: TextStyle(
+                  color: statusFilters.contains(filter)
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: statusFilters.contains(filter)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withOpacity(0.3),
+                selectedColor: Theme.of(context).colorScheme.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                side: BorderSide.none,
+                onSelected: (value) {
+                  final current = {...statusFilters};
+                  if (value) {
+                    current.add(filter);
+                  } else {
+                    current.remove(filter);
+                  }
+                  ref.read(statusFilterProvider.notifier).update(current);
+                },
+              ),
+          ],
+        ),
+        if (availableTags.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('すべて'),
+                  selected: tagFilter == null,
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    color: tagFilter == null
+                        ? Theme.of(context).colorScheme.onSecondaryContainer
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight:
+                        tagFilter == null ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  selectedColor:
+                      Theme.of(context).colorScheme.secondaryContainer,
+                  backgroundColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: tagFilter == null
+                          ? Colors.transparent
+                          : Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.3),
+                    ),
+                  ),
                   onSelected: (value) {
-                    final current = {...statusFilters};
                     if (value) {
-                      current.add(filter);
-                    } else {
-                      current.remove(filter);
+                      ref.read(tagFilterProvider.notifier).update(null);
                     }
-                    ref.read(statusFilterProvider.notifier).update(current);
                   },
                 ),
-              // 「ステータスをクリア」ボタンは「フィルタをすべて解除」に統合したため削除
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (availableTags.isNotEmpty) ...[
-            const Text(
-              'タグ',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
+                const SizedBox(width: 8),
+                for (final tag in availableTags) ...[
                   ChoiceChip(
-                    label: const Text('すべて'),
-                    selected: tagFilter == null,
+                    label: Text(tag),
+                    selected: tagFilter == tag,
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      color: tagFilter == tag
+                          ? Theme.of(context).colorScheme.onSecondaryContainer
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: tagFilter == tag
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    selectedColor:
+                        Theme.of(context).colorScheme.secondaryContainer,
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: tagFilter == tag
+                            ? Colors.transparent
+                            : Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.3),
+                      ),
+                    ),
                     onSelected: (value) {
-                      if (value) {
-                        ref.read(tagFilterProvider.notifier).update(null);
-                      }
+                      ref
+                          .read(tagFilterProvider.notifier)
+                          .update(value ? tag : null);
                     },
                   ),
                   const SizedBox(width: 8),
-                  for (final tag in availableTags) ...[
-                    ChoiceChip(
-                      label: Text(tag),
-                      selected: tagFilter == tag,
-                      onSelected: (value) {
-                        ref
-                            .read(tagFilterProvider.notifier)
-                            .update(value ? tag : null);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                  ],
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
+          ),
+          const SizedBox(height: 8),
         ],
-      ),
+      ],
     );
   }
 }
@@ -483,6 +561,7 @@ class _UrlCard extends ConsumerWidget {
           if (direction == DismissDirection.startToEnd) {
             await ref.read(urlListProvider.notifier).toggleArchive(url);
             HapticFeedback.mediumImpact();
+            if (!context.mounted) return false;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(url.isArchived ? 'アーカイブを解除しました' : 'アーカイブしました'),
@@ -492,16 +571,14 @@ class _UrlCard extends ConsumerWidget {
             return false;
           }
           if (direction == DismissDirection.endToStart) {
-            // 削除確認ダイアログを表示。
             final confirmed = await showDeleteConfirmDialog(
               context: context,
               ref: ref,
               title: 'このURLを削除しますか？',
               message: url.message.isEmpty ? url.url : url.message,
             );
-            if (!confirmed) {
-              return false;
-            }
+            if (!confirmed) return false;
+
             await ref.read(urlListProvider.notifier).deleteUrl(url);
             HapticFeedback.heavyImpact();
             if (!context.mounted) return false;
@@ -526,15 +603,12 @@ class _UrlCard extends ConsumerWidget {
           return false;
         },
         child: Card(
-          elevation: 0,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          margin: EdgeInsets.zero,
           child: InkWell(
             onTap: () {
               _showDetailSheet(context, ref, url, onEdit);
             },
+            borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -543,115 +617,136 @@ class _UrlCard extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Thumbnail(domain: url.domain, imageUrl: url.ogImageUrl),
-                      const SizedBox(width: 12),
+                      Hero(
+                        tag: 'url-image-${url.id}',
+                        child: _Thumbnail(
+                            domain: url.domain, imageUrl: url.ogImageUrl),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (!url.isRead)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: _StatusBadge(
-                                  label: '未読',
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            Text(
-                              url.message.isEmpty ? url.url : url.message,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    url.domain.isEmpty ? '保存元不明' : url.domain,
-                                    style: theme.textTheme.bodySmall,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (!url.isRead) ...[
+                                        _StatusBadge(
+                                          label: '未読',
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        const SizedBox(height: 6),
+                                      ],
+                                      Text(
+                                        url.message.isEmpty
+                                            ? url.url
+                                            : url.message,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                const Icon(Icons.brightness_1, size: 6),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _relativeTime(url.savedAt),
-                                  style: theme.textTheme.bodySmall,
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  style: IconButton.styleFrom(
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  icon: Icon(
+                                    url.isStarred
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: url.isStarred
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  onPressed: () {
+                                    ref
+                                        .read(urlListProvider.notifier)
+                                        .toggleStar(url);
+                                  },
+                                ),
+                                PopupMenuButton<_OverflowAction>(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: Icon(Icons.more_vert,
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant),
+                                  onSelected: (value) {
+                                    _handleOverflowAction(
+                                        context, ref, value, url);
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: _OverflowAction.openExternal,
+                                      child: ListTile(
+                                        leading: Icon(Icons.open_in_new),
+                                        title: Text('ブラウザで開く'),
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: _OverflowAction.copyLink,
+                                      child: ListTile(
+                                        leading: Icon(Icons.copy_outlined),
+                                        title: Text('リンクをコピー'),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: _OverflowAction.toggleRead,
+                                      child: ListTile(
+                                        leading: Icon(
+                                          url.isRead
+                                              ? Icons.mark_email_read
+                                              : Icons.markunread,
+                                        ),
+                                        title: Text(
+                                            url.isRead ? '未読に戻す' : '既読にする'),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: _OverflowAction.toggleArchive,
+                                      child: ListTile(
+                                        leading: Icon(url.isArchived
+                                            ? Icons.unarchive_outlined
+                                            : Icons.archive_outlined),
+                                        title: Text(
+                                          url.isArchived ? 'アーカイブ解除' : 'アーカイブ',
+                                        ),
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: _OverflowAction.edit,
+                                      child: ListTile(
+                                        leading: Icon(Icons.edit_outlined),
+                                        title: Text('編集'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              url.domain.isEmpty ? '保存元不明' : url.domain,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              url.isStarred ? Icons.star : Icons.star_outline,
-                              color: url.isStarred
-                                  ? theme.colorScheme.primary
-                                  : theme.iconTheme.color,
-                            ),
-                            onPressed: () {
-                              ref
-                                  .read(urlListProvider.notifier)
-                                  .toggleStar(url);
-                            },
-                          ),
-                          PopupMenuButton<_OverflowAction>(
-                            onSelected: (value) {
-                              _handleOverflowAction(context, ref, value, url);
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: _OverflowAction.openExternal,
-                                child: ListTile(
-                                  leading: Icon(Icons.open_in_new),
-                                  title: Text('ブラウザで開く'),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: _OverflowAction.copyLink,
-                                child: ListTile(
-                                  leading: Icon(Icons.copy_outlined),
-                                  title: Text('リンクをコピー'),
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: _OverflowAction.toggleRead,
-                                child: ListTile(
-                                  leading: Icon(
-                                    url.isRead
-                                        ? Icons.mark_email_read
-                                        : Icons.markunread,
-                                  ),
-                                  title: Text(url.isRead ? '未読に戻す' : '既読にする'),
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: _OverflowAction.toggleArchive,
-                                child: ListTile(
-                                  leading: Icon(url.isArchived
-                                      ? Icons.unarchive_outlined
-                                      : Icons.archive_outlined),
-                                  title: Text(
-                                    url.isArchived ? 'アーカイブ解除' : 'アーカイブ',
-                                  ),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: _OverflowAction.edit,
-                                child: ListTile(
-                                  leading: Icon(Icons.edit_outlined),
-                                  title: Text('編集'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -659,9 +754,11 @@ class _UrlCard extends ConsumerWidget {
                     const SizedBox(height: 12),
                     Text(
                       url.details,
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                   if (tags.isNotEmpty) ...[
@@ -838,11 +935,15 @@ class _Thumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 60,
-      height: 60,
+      width: 72,
+      height: 72,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.05),
+          width: 1,
+        ),
         image: imageUrl == null
             ? null
             : DecorationImage(
@@ -853,13 +954,10 @@ class _Thumbnail extends StatelessWidget {
       alignment: Alignment.center,
       child: imageUrl != null
           ? null
-          : Text(
-              domain.isEmpty
-                  ? 'URL'
-                  : domain.characters.take(2).join().toUpperCase(),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          : Icon(
+              Icons.public,
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+              size: 32,
             ),
     );
   }
@@ -876,21 +974,6 @@ enum _OverflowAction {
 
 List<String> _extractTags(String raw) {
   return parseTags(raw);
-}
-
-String _relativeTime(DateTime savedAt) {
-  final now = DateTime.now();
-  final difference = now.difference(savedAt);
-  if (difference.inMinutes < 1) {
-    return 'たった今';
-  } else if (difference.inMinutes < 60) {
-    return '${difference.inMinutes}分前';
-  } else if (difference.inHours < 24) {
-    return '${difference.inHours}時間前';
-  } else if (difference.inDays < 7) {
-    return '${difference.inDays}日前';
-  }
-  return DateFormat('yyyy/MM/dd').format(savedAt);
 }
 
 class _EmptyState extends StatelessWidget {
