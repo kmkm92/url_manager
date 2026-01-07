@@ -268,50 +268,80 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                 ),
               if (duplicates.isNotEmpty) ...[
                 const SizedBox(height: 24),
-                Text(
-                  '重複候補',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                // トグル形式の重複候補セクション
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ...duplicates.map(
-                  (candidate) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.link_outlined),
-                    title: Text(
-                      candidate.message.isEmpty
-                          ? candidate.url
-                          : candidate.message,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  child: Theme(
+                    // ExpansionTileのデフォルトの境界線を削除
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
                     ),
-                    subtitle: Text(
-                      DateFormat('yyyy/MM/dd HH:mm').format(candidate.savedAt),
+                    child: ExpansionTile(
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                      childrenPadding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 8,
+                      ),
+                      leading: Icon(
+                        Icons.content_copy_outlined,
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: Text(
+                        '重複候補',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${duplicates.length} 件',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      children: duplicates
+                          .map(
+                            (candidate) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.link_outlined),
+                              title: Text(
+                                candidate.message.isEmpty
+                                    ? candidate.url
+                                    : candidate.message,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                DateFormat('yyyy/MM/dd HH:mm')
+                                    .format(candidate.savedAt),
+                              ),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) {
+                                    return DraggableScrollableSheet(
+                                      expand: false,
+                                      maxChildSize: 0.95,
+                                      initialChildSize: 0.85,
+                                      minChildSize: 0.5,
+                                      builder: (context, controller) {
+                                        return UrlDetailSheet(
+                                          controller: controller,
+                                          url: candidate,
+                                          onEdit: widget.onEdit,
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          )
+                          .toList(),
                     ),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) {
-                          return DraggableScrollableSheet(
-                            expand: false,
-                            maxChildSize: 0.95,
-                            initialChildSize: 0.85,
-                            minChildSize: 0.5,
-                            builder: (context, controller) {
-                              return UrlDetailSheet(
-                                controller: controller,
-                                url: candidate,
-                                onEdit: widget.onEdit,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
                   ),
                 ),
               ]
