@@ -8,7 +8,7 @@
 - **シェア機能からの保存**: Safariなどから共有メニュー経由でURLを素早く保存
 - **手動追加**: アプリ内からタイトル・URL・メモを入力して保存
 - **編集機能**: 保存したURLの情報を後から編集可能
-- **削除と復元**: 削除時にUndoで復元可能
+- **削除**: 誤操作防止の確認ダイアログ
 - **OGP・ファビコン取得**: URLからサムネイル画像やファビコンを自動取得
 
 ### 整理・検索
@@ -47,7 +47,7 @@
 - **Flutter** - クロスプラットフォームフレームワーク
 - **Riverpod** - 状態管理
 - **Drift** - SQLiteデータベース
-- **Material 3** - モダンなUIデザイン
+- **Material 3 & Custom UI** - iOSライクな洗練されたデザインとアニメーション
 - **iOS Share Extension** - iOSシェア機能連携
 
 ## 📦 依存パッケージ
@@ -170,8 +170,7 @@ lib/
 │   └── tag_utils.dart          # タグ処理ユーティリティ
 ├── view_models/
 │   ├── url_view_model.dart           # URL状態管理
-│   ├── settings_preferences_view_model.dart  # 設定状態管理
-│   └── tag_order_notifier.dart       # タグ順序管理
+│   └── settings_preferences_view_model.dart  # 設定状態管理
 └── views/
     ├── url_list_view.dart       # ホーム画面（URLリスト）
     ├── url_add_view.dart        # URL追加・編集画面
