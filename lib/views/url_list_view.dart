@@ -549,9 +549,11 @@ class _UrlCard extends ConsumerWidget {
         key: ValueKey('url-${url.id ?? url.url}'),
         background: _SwipeBackground(
           color: theme.colorScheme.tertiaryContainer,
-          icon: Icons.archive_outlined,
+          icon: url.isArchived
+              ? Icons.unarchive_outlined
+              : Icons.archive_outlined,
           alignment: Alignment.centerLeft,
-          label: 'アーカイブ',
+          label: url.isArchived ? 'アーカイブ解除' : 'アーカイブ',
         ),
         secondaryBackground: _SwipeBackground(
           color: theme.colorScheme.errorContainer,
