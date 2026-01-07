@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/view_models/settings_preferences_view_model.dart';
 
-/// 削除確認ダイアログを表示し、削除を実行するかどうかを返す。
+/// 削除確認をボトムシートで表示し、削除を実行するかどうかを返す。
 /// 「次回以降表示しない」チェックボックスを含み、設定をSharedPreferencesに保存する。
 Future<bool> showDeleteConfirmDialog({
   required BuildContext context,
@@ -16,24 +16,23 @@ Future<bool> showDeleteConfirmDialog({
     return true;
   }
 
-  final result = await showDialog<bool>(
+  // ボトムシートを表示
+  final result = await showModalBottomSheet<bool>(
     context: context,
-    builder: (context) => _DeleteConfirmDialog(
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => _DeleteConfirmSheet(
       title: title,
       message: message,
     ),
   );
 
   // ダイアログがキャンセルされた場合はfalseを返す。
-  if (result == null) {
-    return false;
-  }
-
-  return result;
+  return result ?? false;
 }
 
-class _DeleteConfirmDialog extends ConsumerStatefulWidget {
-  const _DeleteConfirmDialog({
+class _DeleteConfirmSheet extends ConsumerStatefulWidget {
+  const _DeleteConfirmSheet({
     required this.title,
     this.message,
   });
@@ -42,80 +41,134 @@ class _DeleteConfirmDialog extends ConsumerStatefulWidget {
   final String? message;
 
   @override
-  ConsumerState<_DeleteConfirmDialog> createState() =>
-      _DeleteConfirmDialogState();
+  ConsumerState<_DeleteConfirmSheet> createState() =>
+      _DeleteConfirmSheetState();
 }
 
-class _DeleteConfirmDialogState extends ConsumerState<_DeleteConfirmDialog> {
+class _DeleteConfirmSheetState extends ConsumerState<_DeleteConfirmSheet> {
   bool _doNotShowAgain = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      icon: Icon(
-        Icons.delete_outline,
-        color: theme.colorScheme.error,
-        size: 32,
-      ),
-      title: Text(widget.title),
-      content: Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Icon(
+            Icons.delete_outline,
+            color: theme.colorScheme.error,
+            size: 48,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
           if (widget.message != null) ...[
+            const SizedBox(height: 8),
             Text(
               widget.message!,
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
           ],
-          // 「次回以降表示しない」チェックボックス
-          CheckboxListTile(
-            value: _doNotShowAgain,
-            onChanged: (value) {
+          const SizedBox(height: 24),
+          // 「次回以降表示しない」
+          InkWell(
+            onTap: () {
               setState(() {
-                _doNotShowAgain = value ?? false;
+                _doNotShowAgain = !_doNotShowAgain;
               });
             },
-            title: Text(
-              '次回以降表示しない',
-              style: theme.textTheme.bodyMedium,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _doNotShowAgain
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: _doNotShowAgain
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '次回以降表示しない',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text('キャンセル'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (_doNotShowAgain) {
+                      await ref
+                          .read(settingsPreferencesProvider.notifier)
+                          .updateSkipDeleteConfirm(true);
+                    }
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop(true);
+                  },
+                  child: Text(
+                    '削除',
+                    style: TextStyle(
+                      color: theme.colorScheme.onError,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(false);
-          },
-          child: const Text('キャンセル'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.error,
-          ),
-          onPressed: () async {
-            // 「次回以降表示しない」がチェックされている場合、設定を保存。
-            if (_doNotShowAgain) {
-              await ref
-                  .read(settingsPreferencesProvider.notifier)
-                  .updateSkipDeleteConfirm(true);
-            }
-            if (!context.mounted) return;
-            Navigator.of(context).pop(true);
-          },
-          child: const Text('削除'),
-        ),
-      ],
     );
   }
 }

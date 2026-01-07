@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_manager/view_models/settings_preferences_view_model.dart';
 
 /// 設定画面のルートビュー。
+/// 設定画面のルートビュー。
 class SettingsRootView extends ConsumerWidget {
   const SettingsRootView({super.key});
 
@@ -55,31 +56,14 @@ class SettingsRootView extends ConsumerWidget {
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
-                  trailing: DropdownButton<ThemeMode>(
-                    value: settingsPreferences.themeMode,
-                    onChanged: (mode) async {
-                      if (mode == null) {
-                        return;
-                      }
-                      await ref
-                          .read(settingsPreferencesProvider.notifier)
-                          .updateThemeMode(mode);
-                    },
-                    items: const [
-                      DropdownMenuItem(
-                        value: ThemeMode.system,
-                        child: Text('システム設定に従う'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.light,
-                        child: Text('ライトモード'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.dark,
-                        child: Text('ダークモード'),
-                      ),
-                    ],
-                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    _showThemeSelectionSheet(
+                      context,
+                      ref,
+                      settingsPreferences.themeMode,
+                    );
+                  },
                 ),
                 const Divider(height: 1),
                 // 起動時に表示するタブ設定。Dropdownで即時保存する。
@@ -95,25 +79,14 @@ class SettingsRootView extends ConsumerWidget {
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
-                  trailing: DropdownButton<StartupTab>(
-                    value: settingsPreferences.startupTab,
-                    onChanged: (tab) async {
-                      if (tab == null) {
-                        return;
-                      }
-                      await ref
-                          .read(settingsPreferencesProvider.notifier)
-                          .updateStartupTab(tab);
-                    },
-                    items: StartupTab.values
-                        .map(
-                          (tab) => DropdownMenuItem<StartupTab>(
-                            value: tab,
-                            child: Text(tab.label),
-                          ),
-                        )
-                        .toList(),
-                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    _showStartupTabSelectionSheet(
+                      context,
+                      ref,
+                      settingsPreferences.startupTab,
+                    );
+                  },
                 ),
                 const Divider(height: 1),
                 // 削除確認ダイアログのスキップ設定。
@@ -163,6 +136,184 @@ class SettingsRootView extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showThemeSelectionSheet(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeMode currentMode,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Text(
+                  'テーマを選択',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+              _ThemeOption(
+                mode: ThemeMode.system,
+                label: 'システム設定に従う',
+                isSelected: currentMode == ThemeMode.system,
+                onSelected: (mode) {
+                  ref
+                      .read(settingsPreferencesProvider.notifier)
+                      .updateThemeMode(mode);
+                  Navigator.pop(context);
+                },
+              ),
+              _ThemeOption(
+                mode: ThemeMode.light,
+                label: 'ライトモード',
+                isSelected: currentMode == ThemeMode.light,
+                onSelected: (mode) {
+                  ref
+                      .read(settingsPreferencesProvider.notifier)
+                      .updateThemeMode(mode);
+                  Navigator.pop(context);
+                },
+              ),
+              _ThemeOption(
+                mode: ThemeMode.dark,
+                label: 'ダークモード',
+                isSelected: currentMode == ThemeMode.dark,
+                onSelected: (mode) {
+                  ref
+                      .read(settingsPreferencesProvider.notifier)
+                      .updateThemeMode(mode);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showStartupTabSelectionSheet(
+    BuildContext context,
+    WidgetRef ref,
+    StartupTab currentTab,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Text(
+                  '起動時に開くタブを選択',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+              for (final tab in StartupTab.values)
+                _TabOption(
+                  tab: tab,
+                  isSelected: currentTab == tab,
+                  onSelected: (t) {
+                    ref
+                        .read(settingsPreferencesProvider.notifier)
+                        .updateStartupTab(t);
+                    Navigator.pop(context);
+                  },
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.mode,
+    required this.label,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  final ThemeMode mode;
+  final String label;
+  final bool isSelected;
+  final ValueChanged<ThemeMode> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check, color: theme.colorScheme.primary)
+          : null,
+      onTap: () => onSelected(mode),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+    );
+  }
+}
+
+class _TabOption extends StatelessWidget {
+  const _TabOption({
+    required this.tab,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  final StartupTab tab;
+  final bool isSelected;
+  final ValueChanged<StartupTab> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      title: Text(
+        tab.label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check, color: theme.colorScheme.primary)
+          : null,
+      onTap: () => onSelected(tab),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
     );
   }
 }

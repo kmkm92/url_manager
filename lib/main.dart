@@ -46,6 +46,19 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       // 明るいテーマの定義
       theme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+        splashFactory: NoSplash.splashFactory,
+        dialogTheme: DialogThemeData(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
         useMaterial3: true,
         colorScheme: lightScheme,
         scaffoldBackgroundColor: lightScheme.surface,
@@ -108,6 +121,19 @@ class MyApp extends ConsumerWidget {
       ),
       // ダークテーマの定義
       darkTheme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
+        splashFactory: NoSplash.splashFactory,
+        dialogTheme: DialogThemeData(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: darkScheme.surfaceContainer,
+          surfaceTintColor: Colors.transparent,
+        ),
         useMaterial3: true,
         colorScheme: darkScheme,
         scaffoldBackgroundColor: darkScheme.surface,

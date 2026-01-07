@@ -778,62 +778,19 @@ class _UrlCard extends ConsumerWidget {
                                         .toggleStar(url);
                                   },
                                 ),
-                                PopupMenuButton<_OverflowAction>(
+                                IconButton(
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
-                                  icon: Icon(Icons.more_vert,
+                                  style: IconButton.styleFrom(
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  icon: Icon(Icons.more_horiz,
                                       color:
                                           theme.colorScheme.onSurfaceVariant),
-                                  onSelected: (value) {
-                                    _handleOverflowAction(
-                                        context, ref, value, url);
+                                  onPressed: () {
+                                    _showActionSheet(context, ref, url);
                                   },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: _OverflowAction.openExternal,
-                                      child: ListTile(
-                                        leading: Icon(Icons.open_in_new),
-                                        title: Text('ブラウザで開く'),
-                                      ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: _OverflowAction.copyLink,
-                                      child: ListTile(
-                                        leading: Icon(Icons.copy_outlined),
-                                        title: Text('リンクをコピー'),
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: _OverflowAction.toggleRead,
-                                      child: ListTile(
-                                        leading: Icon(
-                                          url.isRead
-                                              ? Icons.mark_email_read
-                                              : Icons.markunread,
-                                        ),
-                                        title: Text(
-                                            url.isRead ? '未読に戻す' : '既読にする'),
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: _OverflowAction.toggleArchive,
-                                      child: ListTile(
-                                        leading: Icon(url.isArchived
-                                            ? Icons.unarchive_outlined
-                                            : Icons.archive_outlined),
-                                        title: Text(
-                                          url.isArchived ? 'アーカイブ解除' : 'アーカイブ',
-                                        ),
-                                      ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: _OverflowAction.edit,
-                                      child: ListTile(
-                                        leading: Icon(Icons.edit_outlined),
-                                        title: Text('編集'),
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
@@ -903,33 +860,101 @@ class _UrlCard extends ConsumerWidget {
     );
   }
 
-  void _handleOverflowAction(
+  void _showActionSheet(
     BuildContext context,
     WidgetRef ref,
-    _OverflowAction action,
     Url url,
   ) {
-    switch (action) {
-      case _OverflowAction.openExternal:
-        ref.read(urlListProvider.notifier).openUrl(context, url);
-        break;
-      case _OverflowAction.copyLink:
-        Clipboard.setData(ClipboardData(text: url.url));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('リンクをコピーしました')),
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: const Text('ブラウザで開く'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(urlListProvider.notifier).openUrl(context, url);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.copy_outlined),
+                title: const Text('リンクをコピー'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Clipboard.setData(ClipboardData(text: url.url));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('リンクをコピーしました')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  url.isRead ? Icons.mark_email_read : Icons.markunread,
+                ),
+                title: Text(url.isRead ? '未読に戻す' : '既読にする'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(urlListProvider.notifier).toggleRead(url);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('編集'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onEdit(url);
+                },
+              ),
+              ListTile(
+                leading: Icon(url.isArchived
+                    ? Icons.unarchive_outlined
+                    : Icons.archive_outlined),
+                title: Text(
+                  url.isArchived ? 'アーカイブ解除' : 'アーカイブ',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(urlListProvider.notifier).toggleArchive(url);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          Text(url.isArchived ? 'アーカイブを解除しました' : 'アーカイブしました'),
+                    ),
+                  );
+                },
+              ),
+              Divider(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+              ListTile(
+                leading:
+                    Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                title: Text('削除',
+                    style: TextStyle(color: theme.colorScheme.error)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirmed = await showDeleteConfirmDialog(
+                    context: context,
+                    ref: ref,
+                    title: 'このURLを削除しますか？',
+                    message: url.message.isEmpty ? url.url : url.message,
+                  );
+                  if (confirmed) {
+                    await ref.read(urlListProvider.notifier).deleteUrl(url);
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         );
-        break;
-
-      case _OverflowAction.toggleRead:
-        ref.read(urlListProvider.notifier).toggleRead(url);
-        break;
-      case _OverflowAction.edit:
-        onEdit(url);
-        break;
-      case _OverflowAction.toggleArchive:
-        ref.read(urlListProvider.notifier).toggleArchive(url);
-        break;
-    }
+      },
+    );
   }
 
   void _showDetailSheet(
@@ -1130,15 +1155,6 @@ class _Thumbnail extends StatelessWidget {
       size: 32,
     );
   }
-}
-
-enum _OverflowAction {
-  openExternal,
-  copyLink,
-
-  toggleRead,
-  edit,
-  toggleArchive
 }
 
 List<String> _extractTags(String raw) {
