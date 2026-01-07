@@ -90,6 +90,68 @@ final tagFilterProvider = StateNotifierProvider<TagFilterNotifier, String?>(
   (ref) => TagFilterNotifier(),
 );
 
+// タグの並び順を永続化するキー
+const _tagOrderKey = 'filter_tag_order';
+
+/// タグの並び順を永続化するNotifier
+class TagOrderNotifier extends StateNotifier<List<String>> {
+  TagOrderNotifier() : super([]) {
+    _loadFromPrefs();
+  }
+
+  SharedPreferences? _prefs;
+
+  /// SharedPreferencesから保存済みの順序を復元
+  Future<void> _loadFromPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    final savedList = _prefs?.getStringList(_tagOrderKey);
+    if (savedList != null) {
+      state = savedList;
+    }
+  }
+
+  /// タグリストを取得（保存された順序を反映）
+  List<String> getOrderedTags(List<String> availableTags) {
+    final orderedTags = <String>[];
+    // 保存された順序のタグを先に追加
+    for (final tag in state) {
+      if (availableTags.contains(tag)) {
+        orderedTags.add(tag);
+      }
+    }
+    // 新しいタグを後ろに追加
+    for (final tag in availableTags) {
+      if (!orderedTags.contains(tag)) {
+        orderedTags.add(tag);
+      }
+    }
+    return orderedTags;
+  }
+
+  /// 順序を更新し永続化
+  Future<void> updateOrder(List<String> newOrder) async {
+    state = newOrder;
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs?.setStringList(_tagOrderKey, newOrder);
+  }
+
+  /// タグの順序を入れ替え
+  Future<void> reorder(
+      int oldIndex, int newIndex, List<String> currentTags) async {
+    final newList = List<String>.from(currentTags);
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = newList.removeAt(oldIndex);
+    newList.insert(newIndex, item);
+    await updateOrder(newList);
+  }
+}
+
+final tagOrderProvider = StateNotifierProvider<TagOrderNotifier, List<String>>(
+  (ref) => TagOrderNotifier(),
+);
+
 enum StatusFilter { unread, starred, archived }
 
 extension on StatusFilter {
@@ -176,10 +238,10 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: NavigationBar(
             height: 50,
-            backgroundColor: theme.colorScheme.surface.withOpacity(0.6),
+            backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.6),
             surfaceTintColor: Colors.transparent,
             indicatorColor:
-                theme.colorScheme.secondaryContainer.withOpacity(0.5),
+                theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             selectedIndex: currentIndex,
             onDestinationSelected: (value) {
@@ -378,7 +440,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         fillColor: Theme.of(context)
             .colorScheme
             .surfaceContainerHighest
-            .withOpacity(0.4),
+            .withValues(alpha: 0.4),
       ),
       textInputAction: TextInputAction.search,
     );
@@ -426,7 +488,7 @@ class _FilterSection extends ConsumerWidget {
                 backgroundColor: Theme.of(context)
                     .colorScheme
                     .surfaceContainerHighest
-                    .withOpacity(0.3),
+                    .withValues(alpha: 0.3),
                 selectedColor: Theme.of(context).colorScheme.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
@@ -445,85 +507,132 @@ class _FilterSection extends ConsumerWidget {
         ),
         if (availableTags.isNotEmpty) ...[
           const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                ChoiceChip(
-                  label: const Text('すべて'),
-                  selected: tagFilter == null,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: tagFilter == null
-                        ? Theme.of(context).colorScheme.onSecondaryContainer
-                        : Theme.of(context).colorScheme.onSurface,
-                    fontWeight:
-                        tagFilter == null ? FontWeight.bold : FontWeight.normal,
-                  ),
-                  selectedColor:
-                      Theme.of(context).colorScheme.secondaryContainer,
-                  backgroundColor: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withOpacity(0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: tagFilter == null
-                          ? Colors.transparent
-                          : Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withOpacity(0.3),
+          // タグ順序を取得
+          Builder(
+            builder: (context) {
+              // タグ順序の状態変更を監視（これによりreorder時に即座にリビルドされる）
+              ref.watch(tagOrderProvider);
+              // タグ順序を取得
+              final orderedTags = ref
+                  .read(tagOrderProvider.notifier)
+                  .getOrderedTags(availableTags);
+
+              return SizedBox(
+                height: 40,
+                child: Row(
+                  children: [
+                    // 「すべて」ボタン（固定）
+                    ChoiceChip(
+                      label: const Text('すべて'),
+                      selected: tagFilter == null,
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        color: tagFilter == null
+                            ? Theme.of(context).colorScheme.onSecondaryContainer
+                            : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: tagFilter == null
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      selectedColor:
+                          Theme.of(context).colorScheme.secondaryContainer,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: tagFilter == null
+                              ? Colors.transparent
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withValues(alpha: 0.3),
+                        ),
+                      ),
+                      onSelected: (value) {
+                        if (value) {
+                          ref.read(tagFilterProvider.notifier).update(null);
+                        }
+                      },
                     ),
-                  ),
-                  onSelected: (value) {
-                    if (value) {
-                      ref.read(tagFilterProvider.notifier).update(null);
-                    }
-                  },
-                ),
-                const SizedBox(width: 8),
-                for (final tag in availableTags) ...[
-                  ChoiceChip(
-                    label: Text(tag),
-                    selected: tagFilter == tag,
-                    showCheckmark: false,
-                    labelStyle: TextStyle(
-                      color: tagFilter == tag
-                          ? Theme.of(context).colorScheme.onSecondaryContainer
-                          : Theme.of(context).colorScheme.onSurface,
-                      fontWeight: tagFilter == tag
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    selectedColor:
-                        Theme.of(context).colorScheme.secondaryContainer,
-                    backgroundColor: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest
-                        .withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: tagFilter == tag
-                            ? Colors.transparent
-                            : Theme.of(context)
-                                .colorScheme
-                                .outline
-                                .withOpacity(0.3),
+                    const SizedBox(width: 8),
+                    // その他のタグ（ドラッグ可能）
+                    Expanded(
+                      child: ReorderableListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        buildDefaultDragHandles: false,
+                        proxyDecorator: (child, index, animation) {
+                          return Material(
+                            elevation: 4,
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            child: child,
+                          );
+                        },
+                        onReorder: (oldIndex, newIndex) {
+                          ref.read(tagOrderProvider.notifier).reorder(
+                                oldIndex,
+                                newIndex,
+                                orderedTags,
+                              );
+                        },
+                        itemCount: orderedTags.length,
+                        itemBuilder: (context, index) {
+                          final tag = orderedTags[index];
+                          return ReorderableDelayedDragStartListener(
+                            key: ValueKey('tag_$tag'),
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(tag),
+                                selected: tagFilter == tag,
+                                showCheckmark: false,
+                                labelStyle: TextStyle(
+                                  color: tagFilter == tag
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onSecondaryContainer
+                                      : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: tagFilter == tag
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                selectedColor: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.3),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side: BorderSide(
+                                    color: tagFilter == tag
+                                        ? Colors.transparent
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                onSelected: (value) {
+                                  ref
+                                      .read(tagFilterProvider.notifier)
+                                      .update(value ? tag : null);
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    onSelected: (value) {
-                      ref
-                          .read(tagFilterProvider.notifier)
-                          .update(value ? tag : null);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ],
-            ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
         ],
@@ -938,10 +1047,10 @@ class _Thumbnail extends StatelessWidget {
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.05),
+          color: theme.colorScheme.outline.withValues(alpha: 0.05),
           width: 1,
         ),
         // OG画像がある場合は背景として表示
@@ -967,11 +1076,11 @@ class _Thumbnail extends StatelessWidget {
           margin: const EdgeInsets.all(4),
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withOpacity(0.9),
+            color: theme.colorScheme.surface.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
@@ -1002,7 +1111,7 @@ class _Thumbnail extends StatelessWidget {
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => Icon(
             Icons.public,
-            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             size: 32,
           ),
         ),
@@ -1017,7 +1126,7 @@ class _Thumbnail extends StatelessWidget {
     // どちらもない場合: デフォルトアイコン
     return Icon(
       Icons.public,
-      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
       size: 32,
     );
   }

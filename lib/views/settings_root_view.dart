@@ -161,14 +161,6 @@ class SettingsRootView extends ConsumerWidget {
               ],
             ),
           ),
-
-          const SizedBox(height: 24),
-          // バージョン情報。
-          Text(
-            'バージョン 1.0.0',
-            textScaler: textScaler,
-            style: theme.textTheme.bodySmall,
-          ),
         ],
       ),
     );
