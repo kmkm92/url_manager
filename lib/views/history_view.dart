@@ -138,6 +138,12 @@ class HistoryView extends ConsumerWidget {
       return;
     }
 
+    // 重複候補の場合はURLベースのトグル形式で表示
+    if (metric.title == '重複候補') {
+      _showDuplicateList(context, ref, metric, filteredUrls);
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -247,6 +253,200 @@ class HistoryView extends ConsumerWidget {
                             Navigator.of(context).pop();
                             _openDetail(context, ref, url);
                           },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 重複候補をURLベースでグループ化してトグル形式で表示
+  void _showDuplicateList(
+    BuildContext context,
+    WidgetRef ref,
+    _Metric metric,
+    List<Url> filteredUrls,
+  ) {
+    // URLでグループ化
+    final groupedByUrl = groupBy(filteredUrls, (Url url) => url.url);
+    // 重複しているもののみ（2件以上）を抽出
+    final duplicateGroups = groupedByUrl.entries
+        .where((e) => e.value.length > 1)
+        .toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          maxChildSize: 0.95,
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          builder: (context, controller) {
+            final theme = Theme.of(context);
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // ハンドル
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  // タイトル
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor:
+                              metric.accentColor ?? theme.colorScheme.primary,
+                          child: Icon(
+                            metric.icon,
+                            size: 20,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                metric.title,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${duplicateGroups.length} 組の重複',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+                  // URLベースのトグルリスト
+                  Expanded(
+                    child: ListView.builder(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: duplicateGroups.length,
+                      itemBuilder: (context, index) {
+                        final entry = duplicateGroups[index];
+                        final urlString = entry.key;
+                        final duplicateItems = entry.value;
+                        // URLからドメインを取得（最初のアイテムのドメインを使用）
+                        final domain = duplicateItems.first.domain.isEmpty
+                            ? '保存元不明'
+                            : duplicateItems.first.domain;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              dividerColor: Colors.transparent,
+                            ),
+                            child: ExpansionTile(
+                              tilePadding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              childrenPadding: const EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                bottom: 8,
+                              ),
+                              leading: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: theme.colorScheme.primary
+                                    .withValues(alpha: 0.1),
+                                child: Text(
+                                  '${duplicateItems.length}',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                domain,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                urlString,
+                                style: theme.textTheme.bodySmall,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              children: duplicateItems
+                                  .map(
+                                    (url) => ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(
+                                        url.isRead
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        color: url.isRead
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.outline,
+                                      ),
+                                      title: Text(
+                                        url.message.isEmpty
+                                            ? url.url
+                                            : url.message,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      subtitle: Text(
+                                        DateFormat('yyyy/MM/dd HH:mm')
+                                            .format(url.savedAt),
+                                        style: theme.textTheme.bodySmall,
+                                      ),
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                        _openDetail(context, ref, url);
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
                         );
                       },
                     ),
