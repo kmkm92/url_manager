@@ -184,6 +184,13 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                   hintText: '気づきやTODOをメモ',
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (value) {
+                  // 入力変更時に自動保存
+                  ref.read(urlListProvider.notifier).updateMetadata(
+                        latest,
+                        details: value,
+                      );
+                },
               ),
               const SizedBox(height: 12),
               TextField(
@@ -192,6 +199,13 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                   labelText: 'タグ（カンマ区切り）',
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (value) {
+                  // 入力変更時に自動保存
+                  ref.read(urlListProvider.notifier).updateMetadata(
+                        latest,
+                        tags: value,
+                      );
+                },
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -234,21 +248,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                     },
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.tonalIcon(
-                  onPressed: () {
-                    ref.read(urlListProvider.notifier).updateMetadata(
-                          latest,
-                          details: _memoController.text,
-                          tags: _tagsController.text,
-                        );
-                  },
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('保存'),
-                ),
               ),
               const SizedBox(height: 24),
               if (_tagsController.text.trim().isNotEmpty)
