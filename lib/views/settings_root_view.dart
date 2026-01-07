@@ -45,28 +45,51 @@ class SettingsRootView extends ConsumerWidget {
             child: Column(
               children: [
                 // ダークテーマの強制適用設定。デザインポリシーをユーザーに委ねる。
-                SwitchListTile.adaptive(
-                  value: settingsPreferences.enableDarkTheme,
-                  onChanged: (value) async {
-                    await ref
-                        .read(settingsPreferencesProvider.notifier)
-                        .updateEnableDarkTheme(value);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    showSavedSnackBar('テーマ設定を保存しました');
-                  },
+                // テーマ設定。
+                ListTile(
+                  leading: const Icon(Icons.brightness_6),
                   title: Text(
-                    '常にダークテーマを使用',
+                    'テーマ',
                     textScaler: textScaler,
                     style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    settingsPreferences.enableDarkTheme
-                        ? '常時ダークテーマで表示します'
-                        : 'システムテーマに合わせて表示します',
+                    switch (settingsPreferences.themeMode) {
+                      ThemeMode.system => 'システムテーマに合わせて表示します',
+                      ThemeMode.light => 'ライトモードで表示します',
+                      ThemeMode.dark => 'ダークモードで表示します',
+                    },
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: DropdownButton<ThemeMode>(
+                    value: settingsPreferences.themeMode,
+                    onChanged: (mode) async {
+                      if (mode == null) {
+                        return;
+                      }
+                      await ref
+                          .read(settingsPreferencesProvider.notifier)
+                          .updateThemeMode(mode);
+                      if (!context.mounted) {
+                        return;
+                      }
+                      showSavedSnackBar('テーマ設定を保存しました');
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('システム設定に従う'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('ライトモード'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('ダークモード'),
+                      ),
+                    ],
                   ),
                 ),
                 const Divider(height: 1),

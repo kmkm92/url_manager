@@ -165,7 +165,7 @@ class MyApp extends ConsumerWidget {
         ),
       ),
       // ダークテーマ設定に応じてテーマモードを切り替える。
-      themeMode: settings.enableDarkTheme ? ThemeMode.dark : ThemeMode.system,
+      themeMode: settings.themeMode,
       home: const UrlListView(),
     );
   }

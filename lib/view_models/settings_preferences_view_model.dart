@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; // ThemeModeのために追加
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,7 +40,7 @@ class SettingsPreferencesState {
   const SettingsPreferencesState({
     this.wifiOnlySummaries = false,
     this.preferDynamicType = true,
-    this.enableDarkTheme = false,
+    this.themeMode = ThemeMode.system, // デフォルトはシステム設定に従う
     this.startupTab = StartupTab.home,
     this.skipDeleteConfirm = false,
     this.shouldRedirectAfterShare = false,
@@ -47,7 +48,7 @@ class SettingsPreferencesState {
 
   final bool wifiOnlySummaries; // モバイルデータを抑えるため、Wi-Fi時のみ要約を投げるかどうか。
   final bool preferDynamicType; // OSの文字サイズ指定を優先させるかどうか。
-  final bool enableDarkTheme; // 常にダークテーマを使うかどうか。
+  final ThemeMode themeMode; // テーマモード設定 (System / Light / Dark)。
   final StartupTab startupTab; // アプリ起動時に開くタブ。
   final bool skipDeleteConfirm; // 削除時に確認ダイアログをスキップするかどうか。
   final bool shouldRedirectAfterShare; // 共有保存後にアプリを開くかどうか。
@@ -55,7 +56,7 @@ class SettingsPreferencesState {
   SettingsPreferencesState copyWith({
     bool? wifiOnlySummaries,
     bool? preferDynamicType,
-    bool? enableDarkTheme,
+    ThemeMode? themeMode,
     StartupTab? startupTab,
     bool? skipDeleteConfirm,
     bool? shouldRedirectAfterShare,
@@ -63,7 +64,7 @@ class SettingsPreferencesState {
     return SettingsPreferencesState(
       wifiOnlySummaries: wifiOnlySummaries ?? this.wifiOnlySummaries,
       preferDynamicType: preferDynamicType ?? this.preferDynamicType,
-      enableDarkTheme: enableDarkTheme ?? this.enableDarkTheme,
+      themeMode: themeMode ?? this.themeMode,
       startupTab: startupTab ?? this.startupTab,
       skipDeleteConfirm: skipDeleteConfirm ?? this.skipDeleteConfirm,
       shouldRedirectAfterShare:
@@ -84,6 +85,7 @@ class SettingsPreferencesNotifier
 
   SharedPreferences? _cachedPrefs; // 何度も取得しないようキャッシュ。
   static const _redirectAfterShareKey = 'settings_redirect_after_share';
+  static const _themeModeKey = 'settings_theme_mode'; // テーマモードの保存キー。
 
   Future<SharedPreferences> get _prefs async {
     return _cachedPrefs ??= await SharedPreferences.getInstance();
@@ -98,6 +100,27 @@ class SettingsPreferencesNotifier
       orElse: () => state.startupTab,
     );
 
+    // テーマ設定の読み込みと移行ロジック
+    ThemeMode parsedThemeMode;
+    if (prefs.containsKey(_themeModeKey)) {
+      // 新しいキーが存在する場合はそれを使用
+      final themeName = prefs.getString(_themeModeKey);
+      parsedThemeMode = ThemeMode.values.firstWhere(
+        (mode) => mode.name == themeName,
+        orElse: () => ThemeMode.system,
+      );
+    } else {
+      // 新しいキーがない場合、古いキー(bool)を確認して移行
+      final oldDarkEnabled = prefs.getBool(_darkThemeKey);
+      if (oldDarkEnabled != null) {
+        // 旧設定が存在する場合、trueならDark、falseならSystem(デフォルト挙動と仮定)に移行
+        parsedThemeMode = oldDarkEnabled ? ThemeMode.dark : ThemeMode.system;
+      } else {
+        // どちらもなければSystem
+        parsedThemeMode = ThemeMode.system;
+      }
+    }
+
     final redirectAfterShare = prefs.getBool(_redirectAfterShareKey) ?? false;
 
     // 起動時にネイティブ側の設定も同期しておく
@@ -107,7 +130,7 @@ class SettingsPreferencesNotifier
       wifiOnlySummaries: prefs.getBool(_wifiOnlyKey) ?? state.wifiOnlySummaries,
       preferDynamicType:
           prefs.getBool(_dynamicTypeKey) ?? state.preferDynamicType,
-      enableDarkTheme: prefs.getBool(_darkThemeKey) ?? state.enableDarkTheme,
+      themeMode: parsedThemeMode,
       startupTab: parsedStartupTab,
       skipDeleteConfirm:
           prefs.getBool(_skipDeleteConfirmKey) ?? state.skipDeleteConfirm,
@@ -129,11 +152,11 @@ class SettingsPreferencesNotifier
     await prefs.setBool(_dynamicTypeKey, enabled);
   }
 
-  /// ダークテーマ利用設定を更新し永続化する。
-  Future<void> updateEnableDarkTheme(bool enabled) async {
-    state = state.copyWith(enableDarkTheme: enabled);
+  /// テーマモード設定を更新し永続化する。
+  Future<void> updateThemeMode(ThemeMode mode) async {
+    state = state.copyWith(themeMode: mode);
     final prefs = await _prefs;
-    await prefs.setBool(_darkThemeKey, enabled);
+    await prefs.setString(_themeModeKey, mode.name);
   }
 
   /// 起動時に開くタブを更新し永続化する。
