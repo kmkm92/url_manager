@@ -585,23 +585,6 @@ class _UrlCard extends ConsumerWidget {
 
             await ref.read(urlListProvider.notifier).deleteUrl(url);
             HapticFeedback.heavyImpact();
-            if (!context.mounted) return false;
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(
-                  content: const Text('URLを削除しました'),
-                  duration: const Duration(seconds: 2),
-                  behavior: SnackBarBehavior.floating,
-                  showCloseIcon: true,
-                  action: SnackBarAction(
-                    label: '元に戻す',
-                    onPressed: () {
-                      ref.read(urlListProvider.notifier).restoreDeleted();
-                    },
-                  ),
-                ),
-              );
             return false;
           }
           return false;
