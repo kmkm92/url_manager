@@ -245,9 +245,6 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                           details: _memoController.text,
                           tags: _tagsController.text,
                         );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('メモとタグを保存しました')),
-                    );
                   },
                   icon: const Icon(Icons.save_outlined),
                   label: const Text('保存'),
