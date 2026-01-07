@@ -263,12 +263,13 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           return false;
         }
 
-        return statusFilters.any((filter) {
+        // AND条件: すべてのフィルター条件を満たすURLのみ表示
+        return statusFilters.every((filter) {
           switch (filter) {
             case StatusFilter.unread:
-              return !url.isRead && !url.isArchived;
+              return !url.isRead;
             case StatusFilter.starred:
-              return url.isStarred && !url.isArchived;
+              return url.isStarred;
             case StatusFilter.archived:
               return url.isArchived;
           }
