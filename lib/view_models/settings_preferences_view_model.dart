@@ -121,7 +121,7 @@ class SettingsPreferencesNotifier
       }
     }
 
-    final redirectAfterShare = prefs.getBool(_redirectAfterShareKey) ?? false;
+    final redirectAfterShare = prefs.getBool(_redirectAfterShareKey) ?? true;
 
     // 起動時にネイティブ側の設定も同期しておく
     _syncRedirectSettingToNative(redirectAfterShare);
