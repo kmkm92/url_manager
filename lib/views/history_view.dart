@@ -54,6 +54,8 @@ class HistoryView extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: ExpansionTile(
+                shape: const Border(), // 展開時の上下線を削除
+                collapsedShape: const Border(), // 折りたたみ時の上下線を削除
                 tilePadding: const EdgeInsets.symmetric(horizontal: 16),
                 childrenPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

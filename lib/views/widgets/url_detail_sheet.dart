@@ -290,7 +290,7 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
                         color: theme.colorScheme.primary,
                       ),
                       title: Text(
-                        '重複候補',
+                        '同一ドメイン',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
