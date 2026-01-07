@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,6 +148,7 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
     final currentIndex = ref.watch(homeTabIndexProvider);
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: theme.colorScheme.surface,
       body: IndexedStack(
         index: currentIndex,
@@ -169,28 +171,39 @@ class _UrlListViewState extends ConsumerState<UrlListView> {
               label: const Text('保存'),
             )
           : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (value) {
-          ref.read(homeTabIndexProvider.notifier).state = value;
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'ホーム',
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: NavigationBar(
+            height: 50,
+            backgroundColor: theme.colorScheme.surface.withOpacity(0.6),
+            surfaceTintColor: Colors.transparent,
+            indicatorColor:
+                theme.colorScheme.secondaryContainer.withOpacity(0.5),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+            selectedIndex: currentIndex,
+            onDestinationSelected: (value) {
+              ref.read(homeTabIndexProvider.notifier).state = value;
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'ホーム',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.history_outlined),
+                selectedIcon: Icon(Icons.history),
+                label: '履歴',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: '設定',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: '履歴',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: '設定',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -276,6 +289,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     return SafeArea(
+      bottom: false,
       child: CustomScrollView(
         slivers: [
           // ライブラリタイトル・検索・フィルターを統合したFloating Header
@@ -330,7 +344,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               ),
             ),
           const SliverToBoxAdapter(
-            child: SizedBox(height: 96),
+            child: SizedBox(height: 120),
           ),
         ],
       ),

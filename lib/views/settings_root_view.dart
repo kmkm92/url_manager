@@ -24,6 +24,7 @@ class SettingsRootView extends ConsumerWidget {
     }
 
     return SafeArea(
+      bottom: false,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
         children: [

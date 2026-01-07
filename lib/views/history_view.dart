@@ -28,6 +28,7 @@ class HistoryView extends ConsumerWidget {
       ..sort((a, b) => b.key.compareTo(a.key));
 
     return SafeArea(
+      bottom: false,
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 120),
         itemCount: entries.length + 1,
