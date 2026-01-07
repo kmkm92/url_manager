@@ -54,6 +54,29 @@ dev_dependencies:
   drift_dev: ^2.18.0
   json_serializable: ^6.8.0
   build_runner: ^2.4.9
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.0
+
+# スプラッシュ画面設定
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: lib/splash/linkma_splash.png
+  android_12:
+    color: "#FFFFFF"
+    image: lib/splash/linkma_splash.png
+  ios: true
+  android: true
+
+# アプリアイコン設定
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/icon/linkma_icon.png"
+  # Android用の設定
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "lib/icon/linkma_icon.png"
+  # iOS用アイコンの角丸の削除
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
