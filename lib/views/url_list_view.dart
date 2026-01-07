@@ -930,7 +930,9 @@ class _UrlCard extends ConsumerWidget {
                   );
                 },
               ),
-              Divider(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+              Divider(
+                  color:
+                      theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
               ListTile(
                 leading:
                     Icon(Icons.delete_outline, color: theme.colorScheme.error),

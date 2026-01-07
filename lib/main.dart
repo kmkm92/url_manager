@@ -79,7 +79,7 @@ class MyApp extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-              color: lightScheme.outline.withOpacity(0.12),
+              color: lightScheme.outline.withValues(alpha: 0.12),
               width: 1,
             ),
           ),
@@ -98,12 +98,13 @@ class MyApp extends ConsumerWidget {
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: lightScheme.outline.withOpacity(0.2)),
+            borderSide:
+                BorderSide(color: lightScheme.outline.withValues(alpha: 0.2)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-                color: lightScheme.outline.withOpacity(0.1), width: 1.5),
+                color: lightScheme.outline.withValues(alpha: 0.1), width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -116,7 +117,8 @@ class MyApp extends ConsumerWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           side: BorderSide.none,
-          backgroundColor: lightScheme.surfaceContainerHighest.withOpacity(0.3),
+          backgroundColor:
+              lightScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         ),
       ),
       // ダークテーマの定義
@@ -154,7 +156,7 @@ class MyApp extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               width: 1,
             ),
           ),
@@ -169,7 +171,7 @@ class MyApp extends ConsumerWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: darkScheme.surfaceContainerHighest.withOpacity(0.2),
+          fillColor: darkScheme.surfaceContainerHighest.withValues(alpha: 0.2),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
@@ -187,7 +189,8 @@ class MyApp extends ConsumerWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           side: BorderSide.none,
-          backgroundColor: darkScheme.surfaceContainerHighest.withOpacity(0.3),
+          backgroundColor:
+              darkScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         ),
       ),
       // ダークテーマ設定に応じてテーマモードを切り替える。
