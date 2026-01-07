@@ -43,7 +43,7 @@ class SettingsPreferencesState {
     this.themeMode = ThemeMode.system, // デフォルトはシステム設定に従う
     this.startupTab = StartupTab.home,
     this.skipDeleteConfirm = false,
-    this.shouldRedirectAfterShare = false,
+    this.shouldRedirectAfterShare = true,
   });
 
   final bool wifiOnlySummaries; // モバイルデータを抑えるため、Wi-Fi時のみ要約を投げるかどうか。

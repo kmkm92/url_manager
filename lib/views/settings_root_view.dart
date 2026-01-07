@@ -139,21 +139,21 @@ class SettingsRootView extends ConsumerWidget {
                 ),
                 // 共有保存後のリダイレクト設定。
                 SwitchListTile.adaptive(
-                  value: settingsPreferences.shouldRedirectAfterShare,
+                  value: !settingsPreferences.shouldRedirectAfterShare,
                   onChanged: (value) async {
                     await ref
                         .read(settingsPreferencesProvider.notifier)
-                        .updateRedirectAfterShare(value);
+                        .updateRedirectAfterShare(!value);
                   },
                   title: Text(
-                    '保存後にアプリを開く',
+                    '保存後に元のアプリにとどまる',
                     textScaler: textScaler,
                     style: theme.textTheme.titleSmall,
                   ),
                   subtitle: Text(
-                    settingsPreferences.shouldRedirectAfterShare
-                        ? '共有完了時に自動でアプリを開きます'
-                        : '共有完了後も元のアプリにとどまります',
+                    !settingsPreferences.shouldRedirectAfterShare
+                        ? '共有完了後も元のアプリにとどまります'
+                        : '共有完了時に自動でアプリを開きます',
                     textScaler: textScaler,
                     style: theme.textTheme.bodySmall,
                   ),
