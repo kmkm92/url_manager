@@ -85,6 +85,12 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
   late final GeneratedColumn<String> ogImageUrl = GeneratedColumn<String>(
       'og_image_url', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _faviconUrlMeta =
+      const VerificationMeta('faviconUrl');
+  @override
+  late final GeneratedColumn<String> faviconUrl = GeneratedColumn<String>(
+      'favicon_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _savedAtMeta =
       const VerificationMeta('savedAt');
   @override
@@ -103,6 +109,7 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
         isRead,
         isArchived,
         ogImageUrl,
+        faviconUrl,
         savedAt
       ];
   @override
@@ -162,6 +169,12 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
           ogImageUrl.isAcceptableOrUnknown(
               data['og_image_url']!, _ogImageUrlMeta));
     }
+    if (data.containsKey('favicon_url')) {
+      context.handle(
+          _faviconUrlMeta,
+          faviconUrl.isAcceptableOrUnknown(
+              data['favicon_url']!, _faviconUrlMeta));
+    }
     if (data.containsKey('saved_at')) {
       context.handle(_savedAtMeta,
           savedAt.isAcceptableOrUnknown(data['saved_at']!, _savedAtMeta));
@@ -197,6 +210,8 @@ class $UrlsTable extends Urls with TableInfo<$UrlsTable, Url> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
       ogImageUrl: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}og_image_url']),
+      faviconUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}favicon_url']),
       savedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}saved_at'])!,
     );
@@ -219,6 +234,7 @@ class Url extends DataClass implements Insertable<Url> {
   final bool isRead;
   final bool isArchived;
   final String? ogImageUrl;
+  final String? faviconUrl;
   final DateTime savedAt;
   const Url(
       {this.id,
@@ -231,6 +247,7 @@ class Url extends DataClass implements Insertable<Url> {
       required this.isRead,
       required this.isArchived,
       this.ogImageUrl,
+      this.faviconUrl,
       required this.savedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -248,6 +265,9 @@ class Url extends DataClass implements Insertable<Url> {
     map['is_archived'] = Variable<bool>(isArchived);
     if (!nullToAbsent || ogImageUrl != null) {
       map['og_image_url'] = Variable<String>(ogImageUrl);
+    }
+    if (!nullToAbsent || faviconUrl != null) {
+      map['favicon_url'] = Variable<String>(faviconUrl);
     }
     map['saved_at'] = Variable<DateTime>(savedAt);
     return map;
@@ -267,6 +287,9 @@ class Url extends DataClass implements Insertable<Url> {
       ogImageUrl: ogImageUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(ogImageUrl),
+      faviconUrl: faviconUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(faviconUrl),
       savedAt: Value(savedAt),
     );
   }
@@ -285,6 +308,7 @@ class Url extends DataClass implements Insertable<Url> {
       isRead: serializer.fromJson<bool>(json['isRead']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       ogImageUrl: serializer.fromJson<String?>(json['ogImageUrl']),
+      faviconUrl: serializer.fromJson<String?>(json['faviconUrl']),
       savedAt: serializer.fromJson<DateTime>(json['savedAt']),
     );
   }
@@ -302,6 +326,7 @@ class Url extends DataClass implements Insertable<Url> {
       'isRead': serializer.toJson<bool>(isRead),
       'isArchived': serializer.toJson<bool>(isArchived),
       'ogImageUrl': serializer.toJson<String?>(ogImageUrl),
+      'faviconUrl': serializer.toJson<String?>(faviconUrl),
       'savedAt': serializer.toJson<DateTime>(savedAt),
     };
   }
@@ -317,6 +342,7 @@ class Url extends DataClass implements Insertable<Url> {
           bool? isRead,
           bool? isArchived,
           Value<String?> ogImageUrl = const Value.absent(),
+          Value<String?> faviconUrl = const Value.absent(),
           DateTime? savedAt}) =>
       Url(
         id: id.present ? id.value : this.id,
@@ -329,6 +355,7 @@ class Url extends DataClass implements Insertable<Url> {
         isRead: isRead ?? this.isRead,
         isArchived: isArchived ?? this.isArchived,
         ogImageUrl: ogImageUrl.present ? ogImageUrl.value : this.ogImageUrl,
+        faviconUrl: faviconUrl.present ? faviconUrl.value : this.faviconUrl,
         savedAt: savedAt ?? this.savedAt,
       );
   Url copyWithCompanion(UrlsCompanion data) {
@@ -345,6 +372,8 @@ class Url extends DataClass implements Insertable<Url> {
           data.isArchived.present ? data.isArchived.value : this.isArchived,
       ogImageUrl:
           data.ogImageUrl.present ? data.ogImageUrl.value : this.ogImageUrl,
+      faviconUrl:
+          data.faviconUrl.present ? data.faviconUrl.value : this.faviconUrl,
       savedAt: data.savedAt.present ? data.savedAt.value : this.savedAt,
     );
   }
@@ -362,6 +391,7 @@ class Url extends DataClass implements Insertable<Url> {
           ..write('isRead: $isRead, ')
           ..write('isArchived: $isArchived, ')
           ..write('ogImageUrl: $ogImageUrl, ')
+          ..write('faviconUrl: $faviconUrl, ')
           ..write('savedAt: $savedAt')
           ..write(')'))
         .toString();
@@ -369,7 +399,7 @@ class Url extends DataClass implements Insertable<Url> {
 
   @override
   int get hashCode => Object.hash(id, message, url, details, domain, tags,
-      isStarred, isRead, isArchived, ogImageUrl, savedAt);
+      isStarred, isRead, isArchived, ogImageUrl, faviconUrl, savedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -384,6 +414,7 @@ class Url extends DataClass implements Insertable<Url> {
           other.isRead == this.isRead &&
           other.isArchived == this.isArchived &&
           other.ogImageUrl == this.ogImageUrl &&
+          other.faviconUrl == this.faviconUrl &&
           other.savedAt == this.savedAt);
 }
 
@@ -398,6 +429,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
   final Value<bool> isRead;
   final Value<bool> isArchived;
   final Value<String?> ogImageUrl;
+  final Value<String?> faviconUrl;
   final Value<DateTime> savedAt;
   const UrlsCompanion({
     this.id = const Value.absent(),
@@ -410,6 +442,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
     this.isRead = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.ogImageUrl = const Value.absent(),
+    this.faviconUrl = const Value.absent(),
     this.savedAt = const Value.absent(),
   });
   UrlsCompanion.insert({
@@ -423,6 +456,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
     this.isRead = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.ogImageUrl = const Value.absent(),
+    this.faviconUrl = const Value.absent(),
     required DateTime savedAt,
   })  : message = Value(message),
         url = Value(url),
@@ -438,6 +472,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
     Expression<bool>? isRead,
     Expression<bool>? isArchived,
     Expression<String>? ogImageUrl,
+    Expression<String>? faviconUrl,
     Expression<DateTime>? savedAt,
   }) {
     return RawValuesInsertable({
@@ -451,6 +486,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
       if (isRead != null) 'is_read': isRead,
       if (isArchived != null) 'is_archived': isArchived,
       if (ogImageUrl != null) 'og_image_url': ogImageUrl,
+      if (faviconUrl != null) 'favicon_url': faviconUrl,
       if (savedAt != null) 'saved_at': savedAt,
     });
   }
@@ -466,6 +502,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
       Value<bool>? isRead,
       Value<bool>? isArchived,
       Value<String?>? ogImageUrl,
+      Value<String?>? faviconUrl,
       Value<DateTime>? savedAt}) {
     return UrlsCompanion(
       id: id ?? this.id,
@@ -478,6 +515,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
       isRead: isRead ?? this.isRead,
       isArchived: isArchived ?? this.isArchived,
       ogImageUrl: ogImageUrl ?? this.ogImageUrl,
+      faviconUrl: faviconUrl ?? this.faviconUrl,
       savedAt: savedAt ?? this.savedAt,
     );
   }
@@ -515,6 +553,9 @@ class UrlsCompanion extends UpdateCompanion<Url> {
     if (ogImageUrl.present) {
       map['og_image_url'] = Variable<String>(ogImageUrl.value);
     }
+    if (faviconUrl.present) {
+      map['favicon_url'] = Variable<String>(faviconUrl.value);
+    }
     if (savedAt.present) {
       map['saved_at'] = Variable<DateTime>(savedAt.value);
     }
@@ -534,6 +575,7 @@ class UrlsCompanion extends UpdateCompanion<Url> {
           ..write('isRead: $isRead, ')
           ..write('isArchived: $isArchived, ')
           ..write('ogImageUrl: $ogImageUrl, ')
+          ..write('faviconUrl: $faviconUrl, ')
           ..write('savedAt: $savedAt')
           ..write(')'))
         .toString();
@@ -562,6 +604,7 @@ typedef $$UrlsTableCreateCompanionBuilder = UrlsCompanion Function({
   Value<bool> isRead,
   Value<bool> isArchived,
   Value<String?> ogImageUrl,
+  Value<String?> faviconUrl,
   required DateTime savedAt,
 });
 typedef $$UrlsTableUpdateCompanionBuilder = UrlsCompanion Function({
@@ -575,6 +618,7 @@ typedef $$UrlsTableUpdateCompanionBuilder = UrlsCompanion Function({
   Value<bool> isRead,
   Value<bool> isArchived,
   Value<String?> ogImageUrl,
+  Value<String?> faviconUrl,
   Value<DateTime> savedAt,
 });
 
@@ -615,6 +659,9 @@ class $$UrlsTableFilterComposer extends Composer<_$AppDatabase, $UrlsTable> {
 
   ColumnFilters<String> get ogImageUrl => $composableBuilder(
       column: $table.ogImageUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get faviconUrl => $composableBuilder(
+      column: $table.faviconUrl, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get savedAt => $composableBuilder(
       column: $table.savedAt, builder: (column) => ColumnFilters(column));
@@ -657,6 +704,9 @@ class $$UrlsTableOrderingComposer extends Composer<_$AppDatabase, $UrlsTable> {
 
   ColumnOrderings<String> get ogImageUrl => $composableBuilder(
       column: $table.ogImageUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get faviconUrl => $composableBuilder(
+      column: $table.faviconUrl, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get savedAt => $composableBuilder(
       column: $table.savedAt, builder: (column) => ColumnOrderings(column));
@@ -701,6 +751,9 @@ class $$UrlsTableAnnotationComposer
   GeneratedColumn<String> get ogImageUrl => $composableBuilder(
       column: $table.ogImageUrl, builder: (column) => column);
 
+  GeneratedColumn<String> get faviconUrl => $composableBuilder(
+      column: $table.faviconUrl, builder: (column) => column);
+
   GeneratedColumn<DateTime> get savedAt =>
       $composableBuilder(column: $table.savedAt, builder: (column) => column);
 }
@@ -738,6 +791,7 @@ class $$UrlsTableTableManager extends RootTableManager<
             Value<bool> isRead = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
             Value<String?> ogImageUrl = const Value.absent(),
+            Value<String?> faviconUrl = const Value.absent(),
             Value<DateTime> savedAt = const Value.absent(),
           }) =>
               UrlsCompanion(
@@ -751,6 +805,7 @@ class $$UrlsTableTableManager extends RootTableManager<
             isRead: isRead,
             isArchived: isArchived,
             ogImageUrl: ogImageUrl,
+            faviconUrl: faviconUrl,
             savedAt: savedAt,
           ),
           createCompanionCallback: ({
@@ -764,6 +819,7 @@ class $$UrlsTableTableManager extends RootTableManager<
             Value<bool> isRead = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
             Value<String?> ogImageUrl = const Value.absent(),
+            Value<String?> faviconUrl = const Value.absent(),
             required DateTime savedAt,
           }) =>
               UrlsCompanion.insert(
@@ -777,6 +833,7 @@ class $$UrlsTableTableManager extends RootTableManager<
             isRead: isRead,
             isArchived: isArchived,
             ogImageUrl: ogImageUrl,
+            faviconUrl: faviconUrl,
             savedAt: savedAt,
           ),
           withReferenceMapper: (p0) => p0

@@ -12,5 +12,6 @@ class Urls extends Table {
   BoolColumn get isRead => boolean().withDefault(const Constant(false))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   TextColumn get ogImageUrl => text().nullable()();
+  TextColumn get faviconUrl => text().nullable()(); // ファビコンURL
   DateTimeColumn get savedAt => dateTime()();
 }

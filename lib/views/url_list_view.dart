@@ -608,7 +608,9 @@ class _UrlCard extends ConsumerWidget {
                       Hero(
                         tag: 'url-image-${url.id}',
                         child: _Thumbnail(
-                            domain: url.domain, imageUrl: url.ogImageUrl),
+                            domain: url.domain,
+                            imageUrl: url.ogImageUrl,
+                            faviconUrl: url.faviconUrl),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -914,14 +916,24 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.domain, required this.imageUrl});
+  const _Thumbnail({
+    required this.domain,
+    required this.imageUrl,
+    this.faviconUrl,
+  });
 
   final String domain;
   final String? imageUrl;
+  final String? faviconUrl;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // ファビコンがある場合はファビコンを表示、なければOG画像、どちらもなければアイコン
+    final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
+    final hasFavicon = faviconUrl != null && faviconUrl!.isNotEmpty;
+
     return Container(
       width: 72,
       height: 72,
@@ -932,21 +944,81 @@ class _Thumbnail extends StatelessWidget {
           color: theme.colorScheme.outline.withOpacity(0.05),
           width: 1,
         ),
-        image: imageUrl == null
-            ? null
-            : DecorationImage(
+        // OG画像がある場合は背景として表示
+        image: hasImage
+            ? DecorationImage(
                 image: NetworkImage(imageUrl!),
                 fit: BoxFit.cover,
-              ),
+                onError: (_, __) {},
+              )
+            : null,
       ),
       alignment: Alignment.center,
-      child: imageUrl != null
-          ? null
-          : Icon(
-              Icons.public,
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-              size: 32,
+      child: _buildContent(theme, hasImage, hasFavicon),
+    );
+  }
+
+  Widget? _buildContent(ThemeData theme, bool hasImage, bool hasFavicon) {
+    // OG画像がある場合: ファビコンを左下にオーバーレイ
+    if (hasImage && hasFavicon) {
+      return Align(
+        alignment: Alignment.bottomLeft,
+        child: Container(
+          margin: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.network(
+              faviconUrl!,
+              width: 18,
+              height: 18,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
             ),
+          ),
+        ),
+      );
+    }
+
+    // OG画像がなくファビコンがある場合: ファビコンを中央に大きく表示
+    if (!hasImage && hasFavicon) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          faviconUrl!,
+          width: 40,
+          height: 40,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.public,
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            size: 32,
+          ),
+        ),
+      );
+    }
+
+    // OG画像がある場合: 何も表示しない
+    if (hasImage) {
+      return null;
+    }
+
+    // どちらもない場合: デフォルトアイコン
+    return Icon(
+      Icons.public,
+      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+      size: 32,
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
+import 'package:favicon/favicon.dart';
 
 final urlListProvider =
     StateNotifierProvider<UrlListNotifier, List<Url>>((ref) {
@@ -129,7 +130,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   // 1件のURLを永続化し、付加情報を整形した上で保存
   Future<void> addUrl(Url url) async {
     final db = await _ref.read(provideDatabase.future);
-    final prepared = _decorateUrl(url);
+    final prepared = await _decorateUrl(url);
     await db.insertUrl(prepared);
     await loadUrls();
   }
@@ -215,7 +216,7 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   // 新規作成と更新を兼ねた永続化処理
   Future<void> addOrUpdateUrl(Url url) async {
     final db = await _ref.read(provideDatabase.future);
-    final prepared = _decorateUrl(url);
+    final prepared = await _decorateUrl(url);
     if (prepared.id == null) {
       await db.insertUrl(prepared);
     } else {
@@ -285,14 +286,30 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
     super.dispose();
   }
 
-  // 保存前にタグやドメインを整形
-  Url _decorateUrl(Url url) {
+  // 保存前にタグやドメイン、ファビコンを整形・取得
+  Future<Url> _decorateUrl(Url url) async {
     final normalizedTags = parseTags(url.tags).toSet().join(', ');
+    // ファビコンがまだ取得されていない場合のみ取得
+    String? faviconUrl = url.faviconUrl;
+    if (faviconUrl == null || faviconUrl.isEmpty) {
+      faviconUrl = await _fetchFavicon(url.url);
+    }
     return url.copyWith(
       domain: _deriveDomain(url.url),
       tags: normalizedTags,
       details: url.details,
+      faviconUrl: Value(faviconUrl),
     );
+  }
+
+  // URLからファビコンを取得
+  Future<String?> _fetchFavicon(String url) async {
+    try {
+      final icon = await FaviconFinder.getBest(url);
+      return icon?.url;
+    } catch (_) {
+      return null;
+    }
   }
 
   // URLからドメイン部分を抽出

@@ -13,7 +13,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 2; // スキーマのバージョン
+  int get schemaVersion => 3; // スキーマのバージョン
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +25,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(urls, urls.isRead);
             await m.addColumn(urls, urls.isArchived);
             await m.addColumn(urls, urls.ogImageUrl);
+          }
+          // v3: ファビコンURLカラムを追加
+          if (from < 3) {
+            await m.addColumn(urls, urls.faviconUrl);
           }
         },
       );
