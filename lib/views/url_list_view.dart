@@ -286,26 +286,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             automaticallyImplyLeading: false,
             backgroundColor: Theme.of(context).colorScheme.surface,
             surfaceTintColor: Colors.transparent,
-            toolbarHeight: 210,
+            toolbarHeight: 190,
             titleSpacing: 0,
             title: Padding(
               padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 8),
+                  left: 16, right: 16, top: 32, bottom: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'ライブラリ',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   _buildSearchField(context),
                   const SizedBox(height: 12),
                   _FilterSection(
