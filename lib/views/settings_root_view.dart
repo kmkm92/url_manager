@@ -16,13 +16,6 @@ class SettingsRootView extends ConsumerWidget {
     final settingsPreferences =
         ref.watch(settingsPreferencesProvider); // 個人設定の現在値を取得。
 
-    // 保存完了を利用者に通知するスナックバー表示用のヘルパー。
-    void showSavedSnackBar(String message) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-
     return SafeArea(
       bottom: false,
       child: ListView(
@@ -71,10 +64,6 @@ class SettingsRootView extends ConsumerWidget {
                       await ref
                           .read(settingsPreferencesProvider.notifier)
                           .updateThemeMode(mode);
-                      if (!context.mounted) {
-                        return;
-                      }
-                      showSavedSnackBar('テーマ設定を保存しました');
                     },
                     items: const [
                       DropdownMenuItem(
@@ -115,10 +104,6 @@ class SettingsRootView extends ConsumerWidget {
                       await ref
                           .read(settingsPreferencesProvider.notifier)
                           .updateStartupTab(tab);
-                      if (!context.mounted) {
-                        return;
-                      }
-                      showSavedSnackBar('起動タブ設定を保存しました');
                     },
                     items: StartupTab.values
                         .map(
@@ -138,10 +123,6 @@ class SettingsRootView extends ConsumerWidget {
                     await ref
                         .read(settingsPreferencesProvider.notifier)
                         .updateSkipDeleteConfirm(value);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    showSavedSnackBar('削除確認設定を保存しました');
                   },
                   title: Text(
                     '削除時に確認を表示しない',
@@ -163,10 +144,6 @@ class SettingsRootView extends ConsumerWidget {
                     await ref
                         .read(settingsPreferencesProvider.notifier)
                         .updateRedirectAfterShare(value);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    showSavedSnackBar('共有設定を保存しました');
                   },
                   title: Text(
                     '保存後にアプリを開く',

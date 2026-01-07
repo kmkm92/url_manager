@@ -135,9 +135,6 @@ class HistoryView extends ConsumerWidget {
     List<Url> filteredUrls,
   ) {
     if (filteredUrls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${metric.title}に該当するアイテムがありません')),
-      );
       return;
     }
 
