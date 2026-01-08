@@ -160,16 +160,18 @@ flutter run
 ```
 lib/
 ├── main.dart                    # エントリーポイント
+├── app_theme.dart               # アプリテーマ定義
 ├── database.dart                # Driftデータベース定義
 ├── database.g.dart              # 自動生成ファイル
-├── shared_url_provider.dart     # 共有URL Provider
 ├── icon/                        # アプリアイコン
 ├── splash/                      # スプラッシュ画像
+├── guide_image/                 # ガイド用画像
 ├── models/
 │   ├── url_model.dart          # URLモデル定義
 │   └── tag_utils.dart          # タグ処理ユーティリティ
 ├── view_models/
-│   ├── url_view_model.dart           # URL状態管理
+│   ├── url_view_model.dart                   # URL状態管理
+│   ├── filter_providers.dart                 # フィルター状態管理
 │   └── settings_preferences_view_model.dart  # 設定状態管理
 └── views/
     ├── url_list_view.dart       # ホーム画面（URLリスト）
@@ -177,6 +179,7 @@ lib/
     ├── history_view.dart        # 履歴画面
     ├── settings_root_view.dart  # 設定画面
     └── widgets/
+        ├── url_card.dart             # URLカードウィジェット
         ├── url_detail_sheet.dart     # URL詳細シート
         └── delete_confirm_dialog.dart # 削除確認ダイアログ
 ```
