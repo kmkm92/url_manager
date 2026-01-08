@@ -54,13 +54,17 @@ class StatusFilterNotifier extends StateNotifier<Set<StatusFilter>> {
     _prefs = await SharedPreferences.getInstance();
     final savedList = _prefs?.getStringList(_statusFilterKey);
     if (savedList != null && savedList.isNotEmpty) {
-      state = savedList
-          .map((name) => StatusFilter.values.firstWhere(
-                (f) => f.name == name,
-                orElse: () => StatusFilter.unread,
-              ))
-          .where((f) => StatusFilter.values.contains(f))
-          .toSet();
+      // 保存された値をenum値に変換し、存在しない値はスキップ
+      final validFilters = <StatusFilter>{};
+      for (final name in savedList) {
+        try {
+          final filter = StatusFilter.values.firstWhere((f) => f.name == name);
+          validFilters.add(filter);
+        } catch (_) {
+          // 存在しないenum値は無視（将来のバージョンで削除された可能性）
+        }
+      }
+      state = validFilters;
     }
   }
 

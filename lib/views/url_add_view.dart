@@ -214,6 +214,16 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'URLを入力してください。';
                               }
+                              // URL形式のバリデーション
+                              final uri = Uri.tryParse(value.trim());
+                              if (uri == null || !uri.hasScheme) {
+                                return '有効なURL形式で入力してください。';
+                              }
+                              // http/httpsスキームのみ許可
+                              final scheme = uri.scheme.toLowerCase();
+                              if (scheme != 'http' && scheme != 'https') {
+                                return 'http://またはhttps://で始まるURLを入力してください。';
+                              }
                               return null;
                             },
                           ),

@@ -41,6 +41,19 @@ class _UrlDetailSheetState extends ConsumerState<UrlDetailSheet> {
   }
 
   @override
+  void didUpdateWidget(covariant UrlDetailSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // widgetが更新された場合、ローカル状態を同期
+    if (oldWidget.url.id != widget.url.id) {
+      _memoController.text = widget.url.details;
+      _tagsController.text = widget.url.tags;
+      _isStarred = widget.url.isStarred;
+      _isRead = widget.url.isRead;
+      _isArchived = widget.url.isArchived;
+    }
+  }
+
+  @override
   void dispose() {
     _memoController.dispose();
     _tagsController.dispose();

@@ -181,6 +181,9 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
 
     final canLaunch = await canLaunchUrl(uri);
 
+    // 非同期処理後はcontext.mountedをチェックしてウィジェット破棄後のエラーを防止
+    if (!context.mounted) return;
+
     if (!canLaunch) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
