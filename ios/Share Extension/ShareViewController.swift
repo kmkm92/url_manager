@@ -29,18 +29,24 @@ class ShareViewController: UIViewController, UITextViewDelegate {
     
     // MARK: - UI Components
     
-    private lazy var containerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.systemBackground
+    // すりガラス効果を持つコンテナビュー
+    private lazy var containerBlurView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: .systemThinMaterial)
+        let view = UIVisualEffectView(effect: blurEffect)
         view.layer.cornerRadius = 16
         view.layer.masksToBounds = true
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
+    // containerBlurView.contentViewへの参照用（レイアウト用）
+    private var containerView: UIView {
+        return containerBlurView.contentView
+    }
+    
     private lazy var headerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.secondarySystemBackground
+        view.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.5)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -191,38 +197,11 @@ class ShareViewController: UIViewController, UITextViewDelegate {
     // MARK: - UI Setup
     
     private func setupUI() {
-        view.backgroundColor = .clear
+        // 背景を半透明の暗い色に（背後のコンテンツが見える）
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
         
-        // すりガラス効果の背景を追加（ダークモード対応）
-        let blurEffect: UIBlurEffect
-        if traitCollection.userInterfaceStyle == .dark {
-            blurEffect = UIBlurEffect(style: .dark)
-        } else {
-            blurEffect = UIBlurEffect(style: .light)
-        }
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(blurView)
-        
-        // 半透明のオーバーレイを追加
-        let overlayView = UIView()
-        overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.2)
-        overlayView.translatesAutoresizingMaskIntoConstraints = false
-        blurView.contentView.addSubview(overlayView)
-        
-        NSLayoutConstraint.activate([
-            blurView.topAnchor.constraint(equalTo: view.topAnchor),
-            blurView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            blurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            overlayView.topAnchor.constraint(equalTo: blurView.contentView.topAnchor),
-            overlayView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor),
-            overlayView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor),
-            overlayView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor),
-        ])
-        
-        // コンテナビュー
-        view.addSubview(containerView)
+        // すりガラス効果を持つコンテナを追加
+        view.addSubview(containerBlurView)
         
         // ヘッダービュー
         containerView.addSubview(headerView)
@@ -250,13 +229,13 @@ class ShareViewController: UIViewController, UITextViewDelegate {
     }
     
     private func setupConstraints() {
-        // コンテナビューの制約
-        containerWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: 340)
-        containerHeightConstraint = containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120)
-        containerCenterYConstraint = containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        // コンテナビュー（blurView）の制約
+        containerWidthConstraint = containerBlurView.widthAnchor.constraint(equalToConstant: 340)
+        containerHeightConstraint = containerBlurView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120)
+        containerCenterYConstraint = containerBlurView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         
         NSLayoutConstraint.activate([
-            containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            containerBlurView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             containerCenterYConstraint!,
             containerWidthConstraint!,
             containerHeightConstraint!,
@@ -389,7 +368,7 @@ class ShareViewController: UIViewController, UITextViewDelegate {
         }
         
         let keyboardHeight = keyboardFrame.height
-        let containerBottom = containerView.frame.maxY
+        let containerBottom = containerBlurView.frame.maxY
         let viewHeight = view.bounds.height
         let overlap = containerBottom - (viewHeight - keyboardHeight)
         
