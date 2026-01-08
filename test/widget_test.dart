@@ -17,6 +17,6 @@ void main() {
     );
 
     // アプリが起動し、ナビゲーションバーが表示されることを確認。
-    expect(find.byType(BottomNavigationBar), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
   });
 }
