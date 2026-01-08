@@ -69,6 +69,35 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
 
     final colorScheme = Theme.of(context).colorScheme;
 
+    // 画面サイズに応じたレスポンシブ対応
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    final isCompactWidth = screenWidth < 400; // 小さい画面（SE, miniなど）
+    final isLargeWidth = screenWidth > 600; // 大きい画面（タブレット、横向き）
+    final isCompactHeight = screenHeight < 600; // 縦に短い画面（横向き）
+
+    // 画面サイズに応じたパディングを計算
+    final horizontalPadding = isCompactWidth
+        ? 8.0
+        : isLargeWidth
+            ? 24.0
+            : 16.0;
+    final verticalPadding = isCompactHeight ? 8.0 : 16.0;
+    final innerPadding = isCompactWidth
+        ? 8.0
+        : isLargeWidth
+            ? 24.0
+            : 16.0;
+
+    // フォームの最大幅（大画面での読みやすさのため）
+    const maxFormWidth = 500.0;
+
+    // 要素間のスペーシングを画面サイズに応じて調整
+    final fieldSpacing = isCompactHeight ? 12.0 : 16.0;
+    final chipSpacing = isCompactWidth ? 6.0 : 8.0;
+    final actionButtonSpacing = isCompactHeight ? 16.0 : 24.0;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
@@ -91,7 +120,10 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
           FocusScope.of(context).unfocus();
         },
         child: Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: verticalPadding,
+          ),
           decoration: BoxDecoration(
             // シートの背景色もテーマカラーから取得し、ダークテーマでも違和感が出ないようにする。
             color: colorScheme.surface,
@@ -105,176 +137,240 @@ class _AddUrlFormViewState extends ConsumerState<AddUrlFormView> {
           ),
           child: Form(
             key: _formKey,
-            child: ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          // ラベル色や枠線色をテーマに追従させ、ライト/ダーク双方で読みやすくする。
-                          floatingLabelStyle:
-                              TextStyle(color: colorScheme.onSurface),
-                          labelText: 'タイトル',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colorScheme.outline),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 2),
-                          ),
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest,
-                        ),
-                        validator: (value) {
-                          if (value != null && value.length >= 100) {
-                            return '最大文字数は100文字です。';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      TextFormField(
-                        controller: _urlController,
-                        minLines: 1,
-                        maxLines: null,
-                        keyboardType: TextInputType.url,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.url],
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        decoration: InputDecoration(
-                          floatingLabelStyle:
-                              TextStyle(color: colorScheme.onSurface),
-                          labelText: 'URL',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colorScheme.outline),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 2),
-                          ),
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'URLを入力してください。';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      TextFormField(
-                        controller: _noteController,
-                        minLines: 1,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          labelText: 'メモ',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colorScheme.outline),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 2),
-                          ),
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _tagsController,
-                        decoration: InputDecoration(
-                          labelText: 'タグ（カンマ区切り）',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colorScheme.outline),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 2),
-                          ),
-                          helperText: '例: Flutter, Drift, 要約',
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest,
-                        ),
-                      ),
-                      if (existingTags.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        // 既存タグから選択できるチップ一覧を表示
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: existingTags
-                              .map(
-                                (tag) => ChoiceChip(
-                                  label: Text(tag),
-                                  selected: currentTags.contains(tag),
-                                  onSelected: (_) => _toggleTag(tag),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 8,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: maxFormWidth),
+                child: ListView(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(innerPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          FilterChip(
-                            label: const Text('スター'),
-                            selected: _isStarred,
-                            onSelected: (value) {
-                              setState(() {
-                                _isStarred = value;
-                              });
+                          TextFormField(
+                            controller: _titleController,
+                            decoration: InputDecoration(
+                              // ラベル色や枠線色をテーマに追従させ、ライト/ダーク双方で読みやすくする。
+                              floatingLabelStyle:
+                                  TextStyle(color: colorScheme.onSurface),
+                              labelText: 'タイトル',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: colorScheme.outline),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceContainerHighest,
+                              // 小さい画面用にコンテンツの余白を調整
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isCompactWidth ? 12 : 16,
+                                vertical: isCompactHeight ? 12 : 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value != null && value.length >= 100) {
+                                return '最大文字数は100文字です。';
+                              }
+                              return null;
                             },
                           ),
-                          FilterChip(
-                            label: const Text('既読'),
-                            selected: _isRead,
-                            onSelected: (value) {
-                              setState(() {
-                                _isRead = value;
-                              });
+                          SizedBox(height: fieldSpacing),
+                          TextFormField(
+                            controller: _urlController,
+                            minLines: 1,
+                            maxLines: isCompactHeight ? 2 : null,
+                            keyboardType: TextInputType.url,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.url],
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            decoration: InputDecoration(
+                              floatingLabelStyle:
+                                  TextStyle(color: colorScheme.onSurface),
+                              labelText: 'URL',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: colorScheme.outline),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceContainerHighest,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isCompactWidth ? 12 : 16,
+                                vertical: isCompactHeight ? 12 : 16,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'URLを入力してください。';
+                              }
+                              return null;
                             },
                           ),
-                          FilterChip(
-                            label: const Text('アーカイブ'),
-                            selected: _isArchived,
-                            onSelected: (value) {
-                              setState(() {
-                                _isArchived = value;
-                              });
-                            },
+                          SizedBox(height: fieldSpacing),
+                          TextFormField(
+                            controller: _noteController,
+                            minLines: 1,
+                            maxLines: isCompactHeight ? 2 : 4,
+                            decoration: InputDecoration(
+                              labelText: 'メモ',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: colorScheme.outline),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceContainerHighest,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isCompactWidth ? 12 : 16,
+                                vertical: isCompactHeight ? 12 : 16,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: fieldSpacing),
+                          TextFormField(
+                            controller: _tagsController,
+                            decoration: InputDecoration(
+                              labelText: 'タグ（カンマ区切り）',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: colorScheme.outline),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: colorScheme.primary, width: 2),
+                              ),
+                              helperText: '例: Flutter, Drift, 要約',
+                              filled: true,
+                              fillColor: colorScheme.surfaceContainerHighest,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isCompactWidth ? 12 : 16,
+                                vertical: isCompactHeight ? 12 : 16,
+                              ),
+                            ),
+                          ),
+                          if (existingTags.isNotEmpty) ...[
+                            SizedBox(height: isCompactHeight ? 8 : 12),
+                            // 既存タグから選択できるチップ一覧を表示
+                            Wrap(
+                              spacing: chipSpacing,
+                              runSpacing: chipSpacing,
+                              children: existingTags
+                                  .map(
+                                    (tag) => ChoiceChip(
+                                      label: Text(
+                                        tag,
+                                        style: TextStyle(
+                                          fontSize: isCompactWidth ? 12 : 14,
+                                        ),
+                                      ),
+                                      selected: currentTags.contains(tag),
+                                      onSelected: (_) => _toggleTag(tag),
+                                      visualDensity: isCompactWidth
+                                          ? VisualDensity.compact
+                                          : VisualDensity.standard,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                          SizedBox(height: fieldSpacing),
+                          Wrap(
+                            spacing: isCompactWidth ? 8 : 12,
+                            runSpacing: chipSpacing,
+                            children: [
+                              FilterChip(
+                                label: Text(
+                                  'スター',
+                                  style: TextStyle(
+                                    fontSize: isCompactWidth ? 12 : 14,
+                                  ),
+                                ),
+                                selected: _isStarred,
+                                onSelected: (value) {
+                                  setState(() {
+                                    _isStarred = value;
+                                  });
+                                },
+                                visualDensity: isCompactWidth
+                                    ? VisualDensity.compact
+                                    : VisualDensity.standard,
+                              ),
+                              FilterChip(
+                                label: Text(
+                                  '既読',
+                                  style: TextStyle(
+                                    fontSize: isCompactWidth ? 12 : 14,
+                                  ),
+                                ),
+                                selected: _isRead,
+                                onSelected: (value) {
+                                  setState(() {
+                                    _isRead = value;
+                                  });
+                                },
+                                visualDensity: isCompactWidth
+                                    ? VisualDensity.compact
+                                    : VisualDensity.standard,
+                              ),
+                              FilterChip(
+                                label: Text(
+                                  'アーカイブ',
+                                  style: TextStyle(
+                                    fontSize: isCompactWidth ? 12 : 14,
+                                  ),
+                                ),
+                                selected: _isArchived,
+                                onSelected: (value) {
+                                  setState(() {
+                                    _isArchived = value;
+                                  });
+                                },
+                                visualDensity: isCompactWidth
+                                    ? VisualDensity.compact
+                                    : VisualDensity.standard,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: actionButtonSpacing),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _addOrUpdateUrl,
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isCompactWidth ? 24 : 32,
+                                  vertical: isCompactHeight ? 10 : 12,
+                                ),
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                              ),
+                              child: Text(widget.url == null ? '追加' : '更新'),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _addOrUpdateUrl,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 12),
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                        ),
-                        child: Text(widget.url == null ? '追加' : '更新'),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
