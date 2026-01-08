@@ -188,6 +188,17 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         .toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
+    // タグフィルターが利用可能なタグリストに存在しない場合はリセット
+    if (tagFilter != null &&
+        tagFilter.isNotEmpty &&
+        !availableTags
+            .any((tag) => tag.toLowerCase() == tagFilter.toLowerCase())) {
+      // 次のフレームでリセットを実行（ビルド中の状態変更を避けるため）
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(tagFilterProvider.notifier).update(null);
+      });
+    }
+
     return SafeArea(
       bottom: false,
       child: CustomScrollView(
