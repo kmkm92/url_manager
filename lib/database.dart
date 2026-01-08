@@ -13,10 +13,29 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
 
   @override
-  int get schemaVersion => 1; // スキーマのバージョン
+  int get schemaVersion => 3; // スキーマのバージョン
 
-  // 取得
-  Future<List<Url>> getAllUrls() => select(urls).get();
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(urls, urls.domain);
+            await m.addColumn(urls, urls.tags);
+            await m.addColumn(urls, urls.isStarred);
+            await m.addColumn(urls, urls.isRead);
+            await m.addColumn(urls, urls.isArchived);
+            await m.addColumn(urls, urls.ogImageUrl);
+          }
+          // v3: ファビコンURLカラムを追加
+          if (from < 3) {
+            await m.addColumn(urls, urls.faviconUrl);
+          }
+        },
+      );
+
+  // 取得（最新順にソート）
+  Future<List<Url>> getAllUrls() =>
+      (select(urls)..orderBy([(t) => OrderingTerm.desc(t.savedAt)])).get();
   // 挿入
   Future<int> insertUrl(Url url) => into(urls).insert(url);
   // 更新

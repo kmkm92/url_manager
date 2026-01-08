@@ -1,16 +1,189 @@
-# url_manager
+# Linkma (リンクマ)
 
-A new Flutter project.
+後で読みたい記事やWebページを簡単に保存・管理できるFlutterアプリです。Safariなどのブラウザからシェア機能を使って素早くURLを保存し、タグ付けやフィルタリングで効率的に整理できます。
 
-## Getting Started
+## 📱 主な機能
 
-This project is a starting point for a Flutter application.
+### URL保存・管理
+- **シェア機能からの保存**: Safariなどから共有メニュー経由でURLを素早く保存
+- **手動追加**: アプリ内からタイトル・URL・メモを入力して保存
+- **編集機能**: 保存したURLの情報を後から編集可能
+- **削除**: 誤操作防止の確認ダイアログ
+- **OGP・ファビコン取得**: URLからサムネイル画像やファビコンを自動取得
 
-A few resources to get you started if this is your first Flutter project:
+### 整理・検索
+- **タグ管理**: カンマ区切りでタグを付けて分類
+- **タグ並び替え**: ドラッグ＆ドロップでタグフィルターの順序を変更
+- **ステータスフィルター**: 「未読」「スター」「アーカイブ」でフィルタリング
+- **AND条件検索**: 複数フィルターの同時適用
+- **検索機能**: タイトル・URL・メモ・タグから横断検索
+- **フィルター永続化**: フィルター設定はアプリを閉じても保持
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### ステータス管理
+- **未読/既読**: URLを開くと自動で既読に変更
+- **スター**: 重要なURLにスターを付けて目立たせる
+- **アーカイブ**: 読み終わったURLを整理
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 履歴・統計
+- **日別グループ表示**: 保存日ごとにURLを一覧表示
+- **今週の保存数**: 保存習慣のトラッキング
+- **未読アイテム数**: 未読URLの把握
+
+### ジェスチャー操作
+- **右スワイプ**: アーカイブ/アーカイブ解除
+- **左スワイプ**: 削除
+
+### 詳細画面
+- **同じドメインのURL一覧**: 同じドメインの保存済みURLをトグルで表示
+- **メモ・タグ編集**: 詳細画面から直接編集
+
+### 設定
+- **ダークテーマ**: システム設定に関わらずダークモードを強制
+- **起動時タブ選択**: アプリ起動時に表示するタブを指定
+- **保存後のリダイレクト**: シェア保存後に自動でアプリを起動するかどうか
+
+## 🛠 技術スタック
+
+- **Flutter** - クロスプラットフォームフレームワーク
+- **Riverpod** - 状態管理
+- **Drift** - SQLiteデータベース
+- **Material 3 & Custom UI** - iOSライクな洗練されたデザインとアニメーション
+- **iOS Share Extension** - iOSシェア機能連携
+
+## 📦 依存パッケージ
+
+```yaml
+dependencies:
+  flutter_riverpod: ^2.5.1    # 状態管理
+  drift: ^2.18.0              # データベース
+  url_launcher: ^6.3.2        # 外部ブラウザ起動
+  share_plus: ^7.2.2          # 共有機能
+  shared_preferences: ^2.2.3  # 設定永続化
+  path_provider: ^2.1.3       # ファイルパス取得
+  intl: ^0.19.0               # 日付フォーマット
+  http: ^1.2.1                # OGP取得
+  favicon: ^1.1.2             # ファビコン取得
+```
+
+## 🚀 セットアップ
+
+### 1. リポジトリをクローン
+
+```bash
+git clone <repository-url>
+cd url_manager
+```
+
+### 2. 依存パッケージをインストール
+
+```bash
+flutter pub get
+```
+
+### 3. コード生成（Drift）
+
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+### 4. アプリアイコン生成
+
+```bash
+flutter pub run flutter_launcher_icons
+```
+
+### 5. スプラッシュ画面生成
+
+```bash
+flutter pub run flutter_native_splash:create
+```
+
+### 6. アプリを実行
+
+```bash
+# iOSシミュレーター
+flutter run -d ios
+
+# 実機
+flutter run
+```
+
+## 📖 使い方
+
+### URLを保存する
+
+#### 方法1: シェア機能から保存
+1. Safariなどで保存したいページを開く
+2. 共有ボタンをタップ
+3. 「Linkma」を選択
+4. 自動でアプリに保存される
+
+#### 方法2: アプリ内から手動追加
+1. ホーム画面右下の「+ 保存」ボタンをタップ
+2. タイトル、URL、メモ、タグを入力
+3. 「追加」をタップ
+
+### URLを整理する
+
+#### フィルター機能
+- ホーム画面上部のフィルターチップをタップ
+- 「未読」「スター」「アーカイブ」で絞り込み
+- タグでの絞り込みも可能（並び替え可能）
+
+#### ステータス変更
+- **スター**: カード右上の星アイコンをタップ
+- **既読/未読**: メニューから切り替え
+- **アーカイブ**: 右スワイプまたはメニューから
+
+#### 検索
+- 検索バーにキーワードを入力
+- タイトル・URL・メモ・タグを横断検索
+
+### URLを開く
+
+- カードをタップして詳細表示
+- 「開く」ボタンまたはメニューから「ブラウザで開く」を選択
+- 自動で既読に変更される
+
+### 設定
+
+設定画面から以下を変更可能：
+
+| 設定項目 | 説明 |
+|---------|------|
+| 常にダークテーマを使用 | システム設定に関わらずダークモードを強制 |
+| 起動時に開くタブ | アプリ起動時に表示するタブを指定 |
+| 保存後にアプリを開く | シェア保存後に自動でアプリを起動 |
+
+## 📂 プロジェクト構成
+
+```
+lib/
+├── main.dart                    # エントリーポイント
+├── app_theme.dart               # アプリテーマ定義
+├── database.dart                # Driftデータベース定義
+├── database.g.dart              # 自動生成ファイル
+├── icon/                        # アプリアイコン
+├── splash/                      # スプラッシュ画像
+├── guide_image/                 # ガイド用画像
+├── models/
+│   ├── url_model.dart          # URLモデル定義
+│   └── tag_utils.dart          # タグ処理ユーティリティ
+├── view_models/
+│   ├── url_view_model.dart                   # URL状態管理
+│   ├── filter_providers.dart                 # フィルター状態管理
+│   └── settings_preferences_view_model.dart  # 設定状態管理
+└── views/
+    ├── url_list_view.dart       # ホーム画面（URLリスト）
+    ├── url_add_view.dart        # URL追加・編集画面
+    ├── history_view.dart        # 履歴画面
+    ├── settings_root_view.dart  # 設定画面
+    └── widgets/
+        ├── url_card.dart             # URLカードウィジェット
+        ├── url_detail_sheet.dart     # URL詳細シート
+        └── delete_confirm_dialog.dart # 削除確認ダイアログ
+```
+
+## 📝 ライセンス
+
+このプロジェクトはプライベートリポジトリです。
