@@ -148,6 +148,7 @@ class ShareViewController: UIViewController, UITextViewDelegate {
     private var containerWidthConstraint: NSLayoutConstraint?
     private var containerHeightConstraint: NSLayoutConstraint?
     private var containerCenterYConstraint: NSLayoutConstraint?
+    private var containerBottomConstraint: NSLayoutConstraint?
     private var thumbnailWidthConstraint: NSLayoutConstraint?
     private var thumbnailHeightConstraint: NSLayoutConstraint?
     
@@ -165,6 +166,14 @@ class ShareViewController: UIViewController, UITextViewDelegate {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
+        
+        // キーボード通知を監視
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -182,7 +191,35 @@ class ShareViewController: UIViewController, UITextViewDelegate {
     // MARK: - UI Setup
     
     private func setupUI() {
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        view.backgroundColor = .clear
+        
+        // すりガラス効果の背景を追加（ダークモード対応）
+        let blurEffect: UIBlurEffect
+        if traitCollection.userInterfaceStyle == .dark {
+            blurEffect = UIBlurEffect(style: .dark)
+        } else {
+            blurEffect = UIBlurEffect(style: .light)
+        }
+        let blurView = UIVisualEffectView(effect: blurEffect)
+        blurView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(blurView)
+        
+        // 半透明のオーバーレイを追加
+        let overlayView = UIView()
+        overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.2)
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        blurView.contentView.addSubview(overlayView)
+        
+        NSLayoutConstraint.activate([
+            blurView.topAnchor.constraint(equalTo: view.topAnchor),
+            blurView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            blurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            blurView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlayView.topAnchor.constraint(equalTo: blurView.contentView.topAnchor),
+            overlayView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor),
+            overlayView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor),
+            overlayView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor),
+        ])
         
         // コンテナビュー
         view.addSubview(containerView)
@@ -339,6 +376,42 @@ class ShareViewController: UIViewController, UITextViewDelegate {
             openHostApp()
         } else {
             extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+        }
+    }
+    
+    // MARK: - Keyboard Handling
+    
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+              let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else {
+            return
+        }
+        
+        let keyboardHeight = keyboardFrame.height
+        let containerBottom = containerView.frame.maxY
+        let viewHeight = view.bounds.height
+        let overlap = containerBottom - (viewHeight - keyboardHeight)
+        
+        if overlap > 0 {
+            // コンテナをキーボードの上に移動
+            UIView.animate(withDuration: duration) {
+                self.containerCenterYConstraint?.constant = -(overlap + 20)
+                self.view.layoutIfNeeded()
+            }
+        }
+    }
+    
+    @objc private func keyboardWillHide(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else {
+            return
+        }
+        
+        // コンテナを元の位置に戻す
+        UIView.animate(withDuration: duration) {
+            self.containerCenterYConstraint?.constant = 0
+            self.view.layoutIfNeeded()
         }
     }
     
