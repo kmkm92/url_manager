@@ -52,6 +52,11 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
   final List<SharedMediaFile> _sharedFiles = [];
   Url? _recentlyDeleted;
 
+  // 処理済みURLを追跡して重複を防ぐ
+  final Set<String> _processedUrls = {};
+  // 処理中フラグ（同時処理を防ぐ）
+  bool _isProcessing = false;
+
   // MethodChannel と EventChannel（receive_sharing_intent と同じ構造）
   static const _methodChannel =
       MethodChannel('com.MakotoKono.urlManager/share');
@@ -71,12 +76,8 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
             }
           }
           if (_sharedFiles.isNotEmpty) {
-            addUrlFromShare(
-              message: _sharedFiles.first.message,
-              url: _sharedFiles.first.path,
-            );
-            // 処理後にリセット
-            _resetSharedData();
+            // 全件を順に処理
+            _processAllSharedFiles();
           }
         }
       },
@@ -90,16 +91,51 @@ class UrlListNotifier extends StateNotifier<List<Url>> {
       _sharedFiles.clear();
       _sharedFiles.addAll(value);
       if (_sharedFiles.isNotEmpty) {
-        addUrlFromShare(
-          message: _sharedFiles.first.message,
-          url: _sharedFiles.first.path,
-        );
-        // 処理後にリセット
-        _resetSharedData();
+        // 全件を順に処理
+        _processAllSharedFiles();
       }
     });
 
     loadUrls();
+  }
+
+  /// 共有ファイルリストを全件処理
+  Future<void> _processAllSharedFiles() async {
+    // 処理中の場合はスキップ（重複呼び出し防止）
+    if (_isProcessing) {
+      return;
+    }
+    _isProcessing = true;
+
+    try {
+      // リストをコピーして処理中の追加を防ぐ
+      final filesToProcess = List<SharedMediaFile>.from(_sharedFiles);
+      _sharedFiles.clear();
+
+      for (final file in filesToProcess) {
+        final url = file.path;
+        // 既に処理済みのURLはスキップ
+        if (_processedUrls.contains(url)) {
+          continue;
+        }
+        _processedUrls.add(url);
+
+        await addUrlFromShare(
+          message: file.message,
+          url: url,
+        );
+      }
+
+      // 全件処理完了後にリセット
+      await _resetSharedData();
+
+      // 一定時間後に処理済みURLをクリア（次回の共有に備える）
+      Future.delayed(const Duration(seconds: 5), () {
+        _processedUrls.clear();
+      });
+    } finally {
+      _isProcessing = false;
+    }
   }
 
   /// 初期共有データを取得（receive_sharing_intent.getInitialMedia() と同等）
