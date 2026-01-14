@@ -8,13 +8,20 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:url_manager/database.dart';
 import 'package:url_manager/models/tag_utils.dart';
 import 'package:favicon/favicon.dart';
+import 'package:url_manager/view_models/settings_preferences_view_model.dart';
 
 final urlListProvider =
     StateNotifierProvider<UrlListNotifier, List<Url>>((ref) {
   return UrlListNotifier(ref);
 });
 
-final homeTabIndexProvider = StateProvider<int>((ref) => 0);
+/// 起動時に開くタブのインデックスを管理するProvider
+/// 設定のstartupTabに基づいて初期値を設定する
+final homeTabIndexProvider = StateProvider<int>((ref) {
+  // 設定から起動時タブを取得（初期化時のみ読み取り）
+  final settings = ref.read(settingsPreferencesProvider);
+  return settings.startupTab.index;
+});
 
 /// 共有メディアファイルのデータクラス（receive_sharing_intent の SharedMediaFile と同等）
 class SharedMediaFile {
