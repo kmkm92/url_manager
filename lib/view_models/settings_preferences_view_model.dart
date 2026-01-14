@@ -44,6 +44,7 @@ class SettingsPreferencesState {
     this.startupTab = StartupTab.home,
     this.skipDeleteConfirm = false,
     this.shouldRedirectAfterShare = true,
+    this.isLoaded = false, // 設定が読み込み完了したかどうか
   });
 
   final bool wifiOnlySummaries; // モバイルデータを抑えるため、Wi-Fi時のみ要約を投げるかどうか。
@@ -52,6 +53,7 @@ class SettingsPreferencesState {
   final StartupTab startupTab; // アプリ起動時に開くタブ。
   final bool skipDeleteConfirm; // 削除時に確認ダイアログをスキップするかどうか。
   final bool shouldRedirectAfterShare; // 共有保存後にアプリを開くかどうか。
+  final bool isLoaded; // 設定の読み込みが完了したかどうか。
 
   SettingsPreferencesState copyWith({
     bool? wifiOnlySummaries,
@@ -60,6 +62,7 @@ class SettingsPreferencesState {
     StartupTab? startupTab,
     bool? skipDeleteConfirm,
     bool? shouldRedirectAfterShare,
+    bool? isLoaded,
   }) {
     return SettingsPreferencesState(
       wifiOnlySummaries: wifiOnlySummaries ?? this.wifiOnlySummaries,
@@ -69,6 +72,7 @@ class SettingsPreferencesState {
       skipDeleteConfirm: skipDeleteConfirm ?? this.skipDeleteConfirm,
       shouldRedirectAfterShare:
           shouldRedirectAfterShare ?? this.shouldRedirectAfterShare,
+      isLoaded: isLoaded ?? this.isLoaded,
     );
   }
 }
@@ -135,6 +139,7 @@ class SettingsPreferencesNotifier
       skipDeleteConfirm:
           prefs.getBool(_skipDeleteConfirmKey) ?? state.skipDeleteConfirm,
       shouldRedirectAfterShare: redirectAfterShare,
+      isLoaded: true, // 読み込み完了フラグを設定
     );
   }
 

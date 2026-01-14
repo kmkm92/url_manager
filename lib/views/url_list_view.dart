@@ -12,6 +12,7 @@ import 'package:url_manager/views/history_view.dart';
 import 'package:url_manager/views/settings_root_view.dart';
 import 'package:url_manager/views/url_add_view.dart';
 import 'package:url_manager/views/widgets/url_card.dart';
+import 'package:url_manager/view_models/settings_preferences_view_model.dart';
 
 /// URL一覧画面のルートウィジェット
 class UrlListView extends ConsumerStatefulWidget {
@@ -22,6 +23,43 @@ class UrlListView extends ConsumerStatefulWidget {
 }
 
 class _UrlListViewState extends ConsumerState<UrlListView> {
+  bool _startupTabApplied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 次のフレームで設定の起動時タブを適用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _applyStartupTabOnce();
+    });
+  }
+
+  /// 設定が読み込まれた後、起動時タブを一度だけ適用する
+  void _applyStartupTabOnce() {
+    if (_startupTabApplied) return;
+
+    final settings = ref.read(settingsPreferencesProvider);
+
+    if (settings.isLoaded) {
+      // 設定が既に読み込まれている場合は即座に適用
+      _startupTabApplied = true;
+      ref.read(homeTabIndexProvider.notifier).state = settings.startupTab.index;
+    } else {
+      // 設定がまだ読み込まれていない場合は、読み込み完了を待機
+      // ignore: unused_local_variable - サブスクリプションはウィジェットのライフサイクルで自動管理される
+      ref.listenManual(
+        settingsPreferencesProvider,
+        (previous, next) {
+          if (!_startupTabApplied && next.isLoaded) {
+            _startupTabApplied = true;
+            ref.read(homeTabIndexProvider.notifier).state =
+                next.startupTab.index;
+          }
+        },
+      );
+    }
+  }
+
   void _showAddUrlForm([Url? url]) {
     showModalBottomSheet(
       context: context,
